@@ -1026,10 +1026,17 @@ module MSemantics {
     ensures 0.0 < x < 1.0 ==> |r| >= 1 && r[0] == '.'
     ensures -1.0 < x < 0.0 ==> |r| >= 2 && r[0] == '-' && r[1] == '.'
 
-  // B5: mstr is injective.  OPEN PROOF -- follows from B1 plus injectivity
-  // of toNum on the canonic image of mstr.
-  lemma {:axiom} MstrInjective(x: real, y: real)
+  // B5: mstr is injective.  Immediate from B1 (the round-trip
+  // toNum(mstr(x)) == x): if mstr(x) == mstr(y) then
+  //   x = toNum(mstr(x)) = toNum(mstr(y)) = y.
+  lemma MstrInjective(x: real, y: real)
     ensures mstr(x) == mstr(y) ==> x == y
+  {
+    if mstr(x) == mstr(y) {
+      assert toNum(mstr(x)) == x;
+      assert toNum(mstr(y)) == y;
+    }
+  }
 
   // -- recorded RSM divergences ------------------------------------------
   //
