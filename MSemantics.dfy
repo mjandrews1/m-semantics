@@ -149,8 +149,9 @@ module MSemantics {
          + 0.1 * fracValue(s, j, i + 1)
   }
 
-  function signOf(s: Bytes, i: nat, stop: nat): int
+  function signOf(s: Bytes, i: nat, stop: nat): (r: int)
     requires i <= stop <= |s|
+    ensures r == 1 || r == -1
     decreases stop - i
   {
     if i == stop then 1
@@ -168,21 +169,17 @@ module MSemantics {
     if i < |s| && (s[i] == '+' || s[i] == '-') then signEnd(s, i + 1) else i
   }
 
-  // toNum: ncopy-style.  Always defined.  A leading run of '+'/'-' toggles
-  // a sign flag, digits and one '.' are consumed, an optional E exponent is
-  // applied, and TRAILING JUNK IS IGNORED.  Leading whitespace ends the
-  // parse immediately (so toNum(" 1") = 0).
+  // toNum: ncopy-style, factored as sign x mantissa x scale.
+  //
+  // A leading run of '+'/'-' toggles a sign flag, digits and one '.' are
+  // consumed, an optional E exponent is applied, and TRAILING JUNK IS
+  // IGNORED.  Leading whitespace ends the parse immediately (so
+  // toNum(" 1") = 0).  The factorisation makes the zero-ness argument
+  // immediate: the scale is always > 0, so toNum == 0 iff the mantissa is.
   function toNum(s: Bytes): real
   {
-    (var i := signEnd(s, 0);
-     var sg := signOf(s, 0, i);
-     var j := skipDigits(s, i);
-     var ip := intValue(s, j, i);
-     if j < |s| && s[j] == '.' then
-       (var k := skipDigits(s, j + 1);
-        var fp := fracValue(s, k, j + 1);
-        applyExp(s, k, sg as real * (ip + fp)))
-     else applyExp(s, j, sg as real * ip))
+    var i := signEnd(s, 0);
+    signOf(s, 0, i) as real * intValuePlusFrac(s, i) * applyExpScale(s, mantEnd(s, i))
   }
 
   function applyExp(s: Bytes, k: nat, v: real): real
@@ -230,6 +227,59 @@ module MSemantics {
   predicate truthyByCStringTob(s: Bytes)
   {
     truthyScan(s, |s|, signEnd(s, 0), false)
+  }
+
+  // -- helpers for TruthyByScan -----------------------------------------
+  // Both truthy and truthyByCStringTob are equivalent to "the mantissa
+  // region contains a digit 1-9", which is hasNZ below.  mantEnd is the
+  // end of that region: digits [ '.' digits ], exactly what both the
+  // ncopy parser and the cstringtob scanner walk.
+
+  predicate hasNZ(s: Bytes, i: nat, j: nat)
+    requires i <= j <= |s|
+  {
+    exists k :: i <= k < j && '1' <= s[k] <= '9'
+  }
+
+  // hasNZ over a split range.  The mid point is excluded (it is a '.').
+  lemma HasNZSplit(s: Bytes, i: nat, mid: nat, j: nat)
+    requires i <= mid < j <= |s| || i <= mid == j <= |s|
+    requires mid < |s| && s[mid] == '.'
+    ensures hasNZ(s, i, j) == hasNZ(s, i, mid) || (mid + 1 <= j && hasNZ(s, mid + 1, j))
+  {
+    if mid == j {
+      assert mid + 1 > j;
+      assert hasNZ(s, i, j) == hasNZ(s, i, mid);
+    } else {
+      if hasNZ(s, i, j) {
+        var k :| i <= k < j && '1' <= s[k] <= '9';
+        if k < mid {
+          assert hasNZ(s, i, mid);
+        } else if k == mid {
+          assert s[k] == '.' && !('1' <= s[k] <= '9');
+          assert false;
+        } else {
+          assert mid + 1 <= k < j;
+          assert hasNZ(s, mid + 1, j);
+        }
+      }
+      if hasNZ(s, i, mid) {
+        assert hasNZ(s, i, j);
+      }
+      if mid + 1 <= j && hasNZ(s, mid + 1, j) {
+        assert hasNZ(s, i, j);
+      }
+    }
+  }
+
+  function mantEnd(s: Bytes, i: nat): (r: nat)
+    requires i <= |s|
+    ensures i <= r <= |s|
+    ensures forall k :: i <= k < r ==> isDigit(s[k]) || s[k] == '.'
+    decreases |s| - i
+  {
+    var j := skipDigits(s, i);
+    if j < |s| && s[j] == '.' then skipDigits(s, j + 1) else j
   }
 
   // ----- comparison ------------------------------------------------------
@@ -408,13 +458,256 @@ module MSemantics {
   // =======================================================================
 
   // -- truthy agrees with the cstringtob scan ----------------------------
-  // OPEN PROOF.  toNum(s) != 0  iff  after the sign run, some digit 1-9 is
-  // seen before the parse stops, with at most one '.'.  That is exactly
-  // truthyScan.  Stated as an axiom; the equivalence is the one that would
-  // have caught the ports' "non-empty string" bug.
+  //
+  // The claim:  toNum(s) != 0  <=>  the cstringtob scan sees a '1'-'9'.
+  // Both sides are characterised by hasNZ over the mantissa region
+  // [signEnd, mantEnd) -- the region the ncopy parser and the scanner
+  // both walk (digits, then at most one '.' plus digits).  The exponent
+  // cannot rescue a zero mantissa, so it does not appear in the region.
 
-  lemma {:axiom} TruthyByScan(s: Bytes)
+  // intValue over an all-digit run is 0 iff every digit is '0'.
+  lemma IntValueZero(s: Bytes, j: nat, i: nat)
+    requires i <= j <= |s|
+    requires forall k :: i <= k < j ==> isDigit(s[k])
+    ensures intValue(s, j, i) == 0.0 <==> forall k :: i <= k < j ==> s[k] == '0'
+    decreases j - i
+  {
+    if i == j {
+    } else {
+      assert intValue(s, j, i)
+             == (if isDigit(s[i]) then (s[i] as int - '0' as int) as real else 0.0)
+                * pow10(j - i - 1) + intValue(s, j, i + 1);
+      IntValueZero(s, j, i + 1);
+      IntValueNonNeg(s, j, i + 1);
+      if s[i] == '0' {
+        assert (s[i] as int - '0' as int) == 0;
+        assert intValue(s, j, i) == intValue(s, j, i + 1);
+      } else {
+        assert '1' <= s[i] <= '9';
+        var d := (s[i] as int - '0' as int) as real;
+        assert d >= 1.0;
+        var p := pow10(j - i - 1);
+        assert p > 0.0;
+        assert d * p > 0.0;
+        IntValueNonNeg(s, j, i + 1);
+        assert intValue(s, j, i) == d * p + intValue(s, j, i + 1);
+        assert intValue(s, j, i) > 0.0;
+      }
+    }
+  }
+
+  // fracValue likewise.
+  lemma FracValueZero(s: Bytes, j: nat, i: nat)
+    requires i <= j <= |s|
+    requires forall k :: i <= k < j ==> isDigit(s[k])
+    ensures fracValue(s, j, i) == 0.0 <==> forall k :: i <= k < j ==> s[k] == '0'
+    decreases j - i
+  {
+    if i == j {
+    } else {
+      assert fracValue(s, j, i)
+             == (if isDigit(s[i]) then (s[i] as int - '0' as int) as real else 0.0) * 0.1
+                + 0.1 * fracValue(s, j, i + 1);
+      FracValueZero(s, j, i + 1);
+      FracValueNonNeg(s, j, i + 1);
+      if s[i] == '0' {
+        assert (s[i] as int - '0' as int) == 0;
+        assert fracValue(s, j, i) == 0.1 * fracValue(s, j, i + 1);
+      } else {
+        assert '1' <= s[i] <= '9';
+        assert (s[i] as int - '0' as int) >= 1;
+        assert fracValue(s, j, i) >= 0.1 > 0.0;
+      }
+    }
+  }
+
+  // intValue and fracValue are never negative.
+  lemma IntValueNonNeg(s: Bytes, j: nat, i: nat)
+    requires i <= j <= |s|
+    ensures intValue(s, j, i) >= 0.0
+    decreases j - i
+  {
+    if i < j {
+      IntValueNonNeg(s, j, i + 1);
+    }
+  }
+
+  lemma FracValueNonNeg(s: Bytes, j: nat, i: nat)
+    requires i <= j <= |s|
+    ensures fracValue(s, j, i) >= 0.0
+    decreases j - i
+  {
+    if i < j {
+      FracValueNonNeg(s, j, i + 1);
+    }
+  }
+
+  // The mantissa region contains a 1-9 iff its numeric value is non-zero.
+  lemma MantissaNonZero(s: Bytes, i: nat)
+    requires i <= |s|
+    ensures hasNZ(s, i, mantEnd(s, i))
+            <==> (intValuePlusFrac(s, i) != 0.0)
+    decreases |s| - i
+  {
+    var j := skipDigits(s, i);
+    var e := mantEnd(s, i);
+    IntValueNonNeg(s, j, i);
+    if j < |s| && s[j] == '.' {
+      // region is [i, j) '.' [j+1, e)
+      assert e == skipDigits(s, j + 1);
+      assert i <= j <= e <= |s|;
+      assert s[j] == '.';
+      IntValueZero(s, j, i);
+      FracValueZero(s, e, j + 1);
+      FracValueNonNeg(s, e, j + 1);
+      HasNZSplit(s, i, j, e);
+      assert intValuePlusFrac(s, i) == intValue(s, j, i) + fracValue(s, e, j + 1);
+      // sum is 0 iff both are 0 (both >= 0)
+      if intValue(s, j, i) == 0.0 && fracValue(s, e, j + 1) == 0.0 {
+        assert intValuePlusFrac(s, i) == 0.0;
+      }
+      if intValuePlusFrac(s, i) == 0.0 {
+        assert intValue(s, j, i) == 0.0 && fracValue(s, e, j + 1) == 0.0;
+      }
+    } else {
+      assert e == j;
+      IntValueZero(s, j, i);
+      assert intValuePlusFrac(s, i) == intValue(s, j, i);
+    }
+  }
+
+  // The value of the mantissa: integer part + fraction.  Isolated so
+  // MantissaNonZero can talk about it.
+  function intValuePlusFrac(s: Bytes, i: nat): real
+    requires i <= |s|
+  {
+    var j := skipDigits(s, i);
+    var ip := intValue(s, j, i);
+    if j < |s| && s[j] == '.' then
+      (var k := skipDigits(s, j + 1);
+       ip + fracValue(s, k, j + 1))
+    else ip
+  }
+
+  // The scan sees a 1-9 iff the mantissa region has one.
+  lemma ScanSeesNZ(s: Bytes, i: nat)
+    requires i <= |s|
+    ensures truthyScan(s, |s|, i, false) == hasNZ(s, i, mantEnd(s, i))
+    decreases |s| - i
+  {
+    var e := mantEnd(s, i);
+    if i == |s| {
+    } else if s[i] == '0' {
+      // skipping a zero: the region shifts by one
+      assert mantEnd(s, i) == mantEnd(s, i + 1) || (s[i] == '0' && i == e);
+      ScanSeesNZ(s, i + 1);
+    } else if s[i] == '.' {
+      // first dot: continue with seenDot = true, which forbids a second
+      ScanAfterDot(s, i + 1);
+    } else if '1' <= s[i] <= '9' {
+      // found one immediately; i < e
+      assert hasNZ(s, i, e);
+    } else {
+      // stop character: the region is empty
+      assert e == i;
+    }
+  }
+
+  // After the first dot the scan forbids a second; it matches the
+  // fraction digits of the mantissa region.
+  lemma ScanAfterDot(s: Bytes, i: nat)
+    requires i <= |s|
+    ensures truthyScan(s, |s|, i, true) == hasNZ(s, i, skipDigits(s, i))
+    decreases |s| - i
+  {
+    var e := skipDigits(s, i);
+    if i == |s| {
+    } else if s[i] == '0' {
+      ScanAfterDot(s, i + 1);
+    } else if s[i] == '.' {
+      // second dot: the scan stops here
+      assert e == i;
+    } else if '1' <= s[i] <= '9' {
+      assert hasNZ(s, i, e);
+    } else {
+      assert e == i;
+    }
+  }
+
+  // applyExp is just a multiplication by a positive scale factor.
+  lemma ApplyExpFactor(s: Bytes, k: nat, v: real)
+    requires k <= |s|
+    ensures applyExp(s, k, v) == v * applyExpScale(s, k)
+    ensures applyExpScale(s, k) > 0.0
+  {
+    if k < |s| && (s[k] == 'E' || s[k] == 'e') {
+      var i3 := if k + 1 < |s| && (s[k+1] == '+' || s[k+1] == '-') then k + 2 else k + 1;
+      var eEnd := skipDigits(s, i3);
+      var ev := natValue(s, eEnd, i3);
+      var esg := signOf(s, k + 1, i3);
+      if esg < 0 {
+        assert applyExp(s, k, v) == v / pow10(ev);
+        assert applyExpScale(s, k) == 1.0 / pow10(ev);
+        assert pow10(ev) > 0.0;
+        assert 1.0 / pow10(ev) > 0.0;
+        assert v / pow10(ev) == v * (1.0 / pow10(ev));
+      } else {
+        assert applyExp(s, k, v) == v * pow10(ev);
+        assert applyExpScale(s, k) == pow10(ev);
+        assert pow10(ev) > 0.0;
+      }
+    } else {
+      assert applyExp(s, k, v) == v;
+      assert applyExpScale(s, k) == 1.0;
+    }
+  }
+
+  // toNum is non-zero iff the mantissa has a 1-9.  toNum is defined as
+  // sign x mantissa x scale with scale > 0, so zero-ness is exactly the
+  // mantissa's.
+  lemma ToNumNonZero(s: Bytes)
+    ensures toNum(s) != 0.0
+            <==> hasNZ(s, signEnd(s, 0), mantEnd(s, signEnd(s, 0)))
+  {
+    var i := signEnd(s, 0);
+    MantissaNonZero(s, i);
+    var sg := signOf(s, 0, i) as real;
+    var m := intValuePlusFrac(s, i);
+    var scale := applyExpScale(s, mantEnd(s, i));
+    assert scale > 0.0;
+    assert sg == 1.0 || sg == -1.0;
+    assert toNum(s) == sg * m * scale;
+    // sign is +/-1, scale > 0, so the product is 0 iff the mantissa is
+    if m != 0.0 {
+      assert sg * m != 0.0;
+      assert (sg * m) * scale != 0.0;
+    }
+    if toNum(s) != 0.0 {
+      assert m != 0.0;
+    }
+  }
+
+  // The scale factor applyExp contributes: a power of ten, or 1.  Always
+  // > 0 (pow10 is), so it cannot create or destroy zero.
+  function applyExpScale(s: Bytes, k: nat): real
+    requires k <= |s|
+    ensures applyExpScale(s, k) > 0.0
+  {
+    if k < |s| && (s[k] == 'E' || s[k] == 'e') then
+      (var i3 := if k + 1 < |s| && (s[k+1] == '+' || s[k+1] == '-') then k + 2 else k + 1;
+       var eEnd := skipDigits(s, i3);
+       var ev := natValue(s, eEnd, i3);
+       var esg := signOf(s, k + 1, i3);
+       if esg < 0 then 1.0 / pow10(ev) else pow10(ev))
+    else 1.0
+  }
+
+  lemma TruthyByScan(s: Bytes)
     ensures truthy(s) <==> truthyByCStringTob(s)
+  {
+    ScanSeesNZ(s, signEnd(s, 0));
+    ToNumNonZero(s);
+  }
 
   // -- coll is a strict total order on non-empty subscripts --------------
 
