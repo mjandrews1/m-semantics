@@ -10,6 +10,8 @@
 **Home of this file:** `m-semantics/docs/MASTER_CRITICAL_PATH.md`  
 **≡ reprint copy:** `~/CRITICAL_PATH.md`
 
+**Focus (2026-10-10):** JvMumps + mJVM primary · RSM only Oracle · Py/C3 peer-proof freeze · O'Kane/FreeM adjuncts only · Comdb2 optional infra.
+
 ## How to read this
 
 One **priority-ordered** interleaved path. **Ticket** = GitHub issue when one exists; **(no ticket)** = real work without an issue. Status: **OPEN** · **IN FLIGHT** · **WAIT** · **FROZEN** · **BELAYED**.
