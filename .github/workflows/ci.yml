@@ -11,16 +11,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "8.0.x"
-
-      - name: Install Dafny
+      - name: Install Dafny 4.11.0
         run: |
-          dotnet tool install --global dafny-lang --version 4.11.0
-          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
-          dafny --version
+          set -euo pipefail
+          curl -sL -o dafny.zip \
+            https://github.com/dafny-lang/dafny/releases/download/v4.11.0/dafny-4.11.0-x64-ubuntu-20.04.zip
+          unzip -q dafny.zip
+          echo "$PWD/dafny" >> "$GITHUB_PATH"
+          "$PWD/dafny/dafny" --version
 
       - name: Verify MSemantics
         run: dafny verify MSemantics.dfy
