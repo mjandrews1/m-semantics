@@ -131,10 +131,15 @@ probe_repo() {
   git commit -q -m "ci-block-probe: force $check to fail"
   git push -q -u origin "$branch"
 
+  # gh pr create prints the PR URL on success (no --json on older gh).
   url=$(gh pr create --base main --head "$branch" \
     --title "ci-block-probe: $check must block merge" \
     --body "Automated release-gate probe. Required check $check must fail and block merge." \
-    --json url -q .url)
+    | tail -n1)
+  case "$url" in
+    https://github.com/*/pull/*) ;;
+    *) die "gh pr create did not return a PR URL: $url" ;;
+  esac
   pr_num=${url##*/}
   log "PR $url"
 
