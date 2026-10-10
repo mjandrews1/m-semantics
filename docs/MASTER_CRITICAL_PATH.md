@@ -53,8 +53,8 @@ One **priority-ordered** interleaved path. **Ticket** = GitHub issue when one ex
 | P1.4 | C3Mumps W7–W9 | c3mumps#1 | ✅ **ACCEPT** 131/8/0/0 |
 | P1.5 | JvMumps J8–J11 + mJVM M0–M9 | jvmumps#5 | ✅ done 2026-10-08 (ACCEPT) |
 | P1.6 | Coverage matrix all M stacks (no YottaDB) | rsm#30 | ✅ closed 2026-10-09 |
-| **P1.7** | **JvMumps catch-up J12–J17 → 131/8/0** | **jvmumps#7–#12** | **IN FLIGHT** (J12–J13 done; 111/28/0) |
-| **P1.8** | **mJVM catch-up M10–M12 → 131/8/0** | **jvmumps#13–#15** | **OPEN** |
+| **P1.7** | **JvMumps catch-up J12–J17 → 131/8/0** | **jvmumps#7–#12** | ✅ **131/8/0** |
+| **P1.8** | **mJVM catch-up M10–M12 → 131/8/0** | **jvmumps#13–#15** | ✅ **131/8/0** (native too) |
 
 ## P2 — mJVM (catch-up)
 
@@ -139,8 +139,8 @@ Detail: `~/comdb2/CRITICAL_PATH.md`.
 ## Next action (do this now)
 
 **IN FLIGHT:** PubMed **author-pass** on U01 (`author-pass.log`) · tracker **ydb-mesh#4** · MARC chained behind it.
-**NOW:** **P1.7 JvMumps J14–J17** (`jvmumps#9–#12`) — plan `jvmumps/docs/CATCHUP-2026-10.md`. Target `MATCH=131 MISS=8 ERR=0`. (J12/J13 done → 111/28/0.)
-**THEN:** **P1.8 mJVM catch-up** (`jvmumps#13–#15`) — same target.
+**NOW:** **ydb-mesh#4** author-pass (PubMed 1104/1334 on U01; MARC chained). Close with totals when both done.
+**DONE 2026-10-10:** P1.7 JvMumps + P1.8 mJVM **and** native mJVM — all **131/8/0**. jvmumps#7–#15 closed.
 
 **P5 frozen:** fst reference only — do not open feature work. Tag `frozen-2026-10-09`.
 **P8 closed:** FreeM not under active development — indefinite upstream wait (CoherentLogic #5/#6).
@@ -151,7 +151,7 @@ Detail: `~/comdb2/CRITICAL_PATH.md`.
 
 | Repo | Open |
 |------|------|
-| `mjandrews1/jvmumps` | **#7–#15** JvMumps J12–J17 + mJVM M10–M12 catch-up |
+| `mjandrews1/jvmumps` | **0 open** — #7–#15 closed 2026-10-10 (JvMumps + native mJVM 131/8/0) |
 | `mjandrews1/ydb-mesh` | **#4** full author-pass **IN FLIGHT** (PubMed; MARC chained) |
 | `mjandrews1/fst` | **#10** two-week work log — **parked** with freeze |
 
