@@ -1,0 +1,29 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  dafny:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Install Dafny
+        run: |
+          dotnet tool install --global dafny-lang --version 4.11.0
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+          dafny --version
+
+      - name: Verify MSemantics
+        run: dafny verify MSemantics.dfy
+
+      - name: Verify MPattern
+        run: dafny verify MPattern.dfy
