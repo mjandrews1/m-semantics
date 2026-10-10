@@ -7,9 +7,16 @@
 // Grammar grounded in RSM's runtime/pattern.c and confirmed against a
 // live RSM (V1.83.1):
 //
-//   atom   := count? ( class+ | '"' literal '"' )
+//   atom   := count? ( class+ | '"' literal '"' | group )
+//   group  := '(' alt (',' alt)* ')'
+//   alt    := atom+                         (comma splits ALTERNATIVES)
 //   count  := n | n.m | n. | .m | .        (default 1; . = 0..255)
 //   class  := [A-Za-z]  -- A C E L N P U
+//
+// Groups (VistA FOIA): `.(.N1",")` is 0..255 repetitions of
+// (0..255 digits then one comma).  `.1(1"F",1"L",…)` is 0..1 of a
+// character from that literal set.  Verified live against VistA
+// XTIDTBL.m / DIDU.m (2026-10-10).
 //
 // Several class letters in one atom are ALTERNATION: a character matches
 // the atom if it matches ANY of the letters.  So `1AN` is "one
@@ -177,6 +184,15 @@ module MPattern {
     assert charMatchesBody(c, a) == (classOf(c, 'a') || classOf(c, 'n'));
   }
 
+  lemma CharDigitMatches(c: char)
+    ensures charMatchesBody(c, Atom(1, 1, CLS, ['n'])) == isDigit(c)
+  {
+    var a := Atom(1, 1, CLS, ['n']);
+    assert a.body[0] == 'n';
+    assert classOf(c, 'n') == isDigit(c);
+    assert charMatchesBody(c, a) == classOf(c, 'n');
+  }
+
   // Consuming a run under a class atom, and its decomposition.
   lemma ConsumesClsRun(s: Bytes, a: Atom, p: nat, k: nat)
     requires a.kind == CLS
@@ -259,6 +275,121 @@ module MPattern {
       assert matchesFrom(s, 0, atoms, 0);
     }
   }
+
+  // -- groups (2026-10-10) -----------------------------------------------
+  // One occurrence of a group is one alternative (a sequence of atoms).
+  // Count lo..hi repeats that.  Commas inside the group split alternatives;
+  // quoted commas are part of a literal (XTIDTBL.m `.(.N1",")`).
+
+  predicate altMatches(s: Bytes, p: nat, e: nat, alt: seq<Atom>)
+    requires forall i :: 0 <= i < |alt| ==> wellCounted(alt[i])
+    decreases |alt|
+  {
+    if |alt| == 0 then e == p
+    else
+      exists k :: alt[0].lo <= k <= alt[0].hi &&
+        consumes(s, p, alt[0], k) &&
+        altMatches(s, p + k * advance(s, p, alt[0]), e, alt[1..])
+  }
+
+  predicate groupOnce(s: Bytes, p: nat, e: nat, alts: seq<seq<Atom>>)
+    requires forall a :: a in alts ==> (forall i :: 0 <= i < |a| ==> wellCounted(a[i]))
+  {
+    exists ai :: 0 <= ai < |alts| && altMatches(s, p, e, alts[ai])
+  }
+
+  predicate groupMatches(s: Bytes, p: nat, e: nat, alts: seq<seq<Atom>>, lo: nat, hi: nat)
+    requires forall a :: a in alts ==> (forall i :: 0 <= i < |a| ==> wellCounted(a[i]))
+    decreases lo + hi
+  {
+    if lo == 0 then
+      e == p ||
+      (hi > 0 && exists e2 :: p <= e2 <= |s| && groupOnce(s, p, e2, alts) &&
+                  groupMatches(s, e2, e, alts, 0, hi - 1))
+    else
+      exists e2 :: p <= e2 <= |s| && groupOnce(s, p, e2, alts) &&
+        groupMatches(s, e2, e, alts, lo - 1, if hi == 0 then 0 else hi - 1)
+  }
+
+  // VistA XTIDTBL.m: TIREF ? .(.N1",")
+  // One pair is optional digits then one comma.
+  function pairAlt(): seq<Atom>
+  {
+    [Atom(0, 255, CLS, ['n']), Atom(1, 1, LIT, [','])]
+  }
+
+  lemma CharPairN(c: char)
+    ensures charMatchesBody(c, pairAlt()[0]) == isDigit(c)
+  {
+    var a := pairAlt()[0];
+    assert a.body == ['n'] && a.kind == CLS && |a.body| == 1 && a.body[0] == 'n';
+    assert charMatchesBody(c, a) == (exists j :: 0 <= j < 1 && classOf(c, a.body[j]));
+    assert charMatchesBody(c, a) == classOf(c, 'n');
+    assert classOf(c, 'n') == isDigit(c);
+  }
+
+  predicate digitsThenComma(s: Bytes, p: nat, e: nat)
+  {
+    exists d :: p <= d <= e && d <= |s| && e <= |s|
+      && (forall i :: p <= i < d ==> isDigit(s[i]))
+      && d < e && s[d] == ',' && e == d + 1
+  }
+
+  lemma PairAltMatches(s: Bytes, p: nat, e: nat)
+    requires forall i :: 0 <= i < |pairAlt()| ==> wellCounted(pairAlt()[i])
+    requires p <= e <= |s|
+    requires e - p <= 256
+    ensures altMatches(s, p, e, pairAlt()) <==> digitsThenComma(s, p, e)
+  {
+    if altMatches(s, p, e, pairAlt()) {
+      var k :| pairAlt()[0].lo <= k <= pairAlt()[0].hi
+              && consumes(s, p, pairAlt()[0], k)
+              && altMatches(s, p + k * advance(s, p, pairAlt()[0]), e, pairAlt()[1..]);
+      assert k <= 255;
+      assert p + k <= |s|;
+      ConsumesClsImplies(s, pairAlt()[0], p, k);
+      assert forall i :: p <= i < p + k ==> isDigit(s[i]);
+      // second atom: one comma
+      var k2 :| pairAlt()[1].lo <= k2 <= pairAlt()[1].hi
+                && consumes(s, p + k, pairAlt()[1], k2)
+                && altMatches(s, p + k + k2 * 1, e, []);
+      assert k2 == 1;
+      assert p + k + 1 == e;
+      assert s[p + k] == ',';
+    }
+    if digitsThenComma(s, p, e) {
+      var d :| p <= d <= e && d <= |s| && e <= |s|
+               && (forall i :: p <= i < d ==> isDigit(s[i]))
+               && d < e && s[d] == ',' && e == d + 1;
+      var k := d - p;
+      assert e == d + 1;
+      assert k == e - p - 1 <= 255;
+      forall i | p <= i < d {
+        CharPairN(s[i]);
+      }
+      if k > 0 {
+        ConsumesClsRun(s, pairAlt()[0], p, k);
+      } else {
+        assert consumes(s, p, pairAlt()[0], 0);
+      }
+      assert consumes(s, d, pairAlt()[1], 1);
+      assert altMatches(s, d + 1, e, []);
+      assert altMatches(s, p + k, e, pairAlt()[1..]);
+    }
+  }
+
+  // One or more pairs: used to state the VistA case without full machinery.
+  predicate pairs(s: Bytes, p: nat, e: nat)
+    decreases e - p
+  {
+    p <= e <= |s| &&
+    (p == e ||
+     (exists d {:trigger pairs(s, d + 1, e)} :: p <= d < e && digitsThenComma(s, p, d + 1) && pairs(s, d + 1, e)))
+  }
+
+  // VistA: `.(.N1",")` matches iff s is a concatenation of digits-then-comma pairs.
+  predicate pairString(s: Bytes) { pairs(s, 0, |s|) }
+  
 
   // -- recorded RSM behaviour on the pattern grammar ---------------------
   //
