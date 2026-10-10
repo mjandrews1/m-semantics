@@ -947,6 +947,142 @@ module MSemantics {
     SubsOrdPrefixFirst(a.subs, b.subs);
   }
 
+  // -- collation extras (2026-10-10) ------------------------------------
+
+  // D2: empty subscript sorts before every non-empty subscript.
+  lemma CollEmptyFirst(b: Bytes)
+    requires |b| > 0
+    ensures coll([], b) < 0
+  {
+  }
+
+  lemma CollEmptyLast(b: Bytes)
+    requires |b| > 0
+    ensures coll(b, []) > 0
+  {
+  }
+
+  // D3: every number sorts before every string (class partition).
+  lemma CollNumBeforeString(a: Bytes, b: Bytes)
+    requires |a| > 0 && |b| > 0
+    requires isNum(a) && !isNum(b)
+    ensures coll(a, b) < 0
+  {
+  }
+
+  lemma CollStringAfterNum(a: Bytes, b: Bytes)
+    requires |a| > 0 && |b| > 0
+    requires !isNum(a) && isNum(b)
+    ensures coll(a, b) > 0
+  {
+  }
+
+  // Numeric equivalence class: equal values collate equal even if
+  // byte strings differ ("1.0" vs "1").
+  lemma CollNumEqIfToNumEq(a: Bytes, b: Bytes)
+    requires |a| > 0 && |b| > 0
+    requires isNum(a) && isNum(b)
+    requires toNum(a) == toNum(b)
+    ensures coll(a, b) == 0
+  {
+  }
+
+  lemma CollNumOrder(a: Bytes, b: Bytes)
+    requires |a| > 0 && |b| > 0
+    requires isNum(a) && isNum(b)
+    requires toNum(a) < toNum(b)
+    ensures coll(a, b) < 0
+  {
+  }
+
+  // -- subsOrd / keyord total order --------------------------------------
+
+  lemma SubsOrdIrreflexive(a: seq<Bytes>)
+    ensures subsOrd(a, a) == 0
+    decreases |a|
+  {
+    if a == [] {
+    } else {
+      if a[0] == [] {
+      } else {
+        CollIrreflexive(a[0]);
+      }
+      SubsOrdIrreflexive(a[1..]);
+    }
+  }
+
+  lemma SubsOrdAntisymmetric(a: seq<Bytes>, b: seq<Bytes>)
+    ensures subsOrd(a, b) == -subsOrd(b, a)
+    decreases |a| + |b|
+  {
+    if a == [] && b == [] {
+    } else if a == [] {
+    } else if b == [] {
+    } else {
+      if a[0] == [] || b[0] == [] {
+        // empty head: coll is defined by the empty cases
+        SubsOrdAntisymmetric(a[1..], b[1..]);
+      } else {
+        CollAntisymmetric(a[0], b[0]);
+        var c := coll(a[0], b[0]);
+        if c != 0 {
+        } else {
+          CollIrreflexive(a[0]);
+          SubsOrdAntisymmetric(a[1..], b[1..]);
+        }
+      }
+    }
+  }
+
+  // (SubsOrdTransitive left unproven: needs a stronger coll-case split.
+  //  OrderMinUnique + CollTotal already give $ORDER uniqueness.)
+
+  lemma KeyordIrreflexive(a: Ref)
+    ensures keyord(a, a) == 0
+  {
+    LexIrreflexive(a.name);
+    SubsOrdIrreflexive(a.subs);
+  }
+
+  // -- $ORDER / siblings -----------------------------------------------
+
+  // E1: well-formed subscripts are non-empty, so empty never appears as a
+  // stored sibling subscript.
+  lemma SiblingsNonEmpty(st: Store, prefix: seq<Bytes>, name: Bytes)
+    ensures forall t :: t in siblings(st, prefix, name) ==> |t| > 0
+  {
+  }
+
+  // Forward $ORDER from the empty sentinel yields the minimum sibling.
+  lemma OrderFromEmptyIsMin(st: Store, r: Ref)
+    requires wellFormed(r) && |r.subs| > 0
+    requires r.subs[|r.subs| - 1] == []
+    ensures order(st, r, 1) == (if siblings(st, r.subs[..|r.subs|-1], r.name) == {}
+                                 then NoMore
+                                 else Found(minOf(siblings(st, r.subs[..|r.subs|-1], r.name))))
+  {
+  }
+
+  // If $ORDER forward finds a successor, it is strictly after cur in coll
+  // (or cur was the empty sentinel and the successor is the min).
+  lemma OrderForwardAfterCur(st: Store, r: Ref, t: Bytes)
+    requires wellFormed(r) && |r.subs| > 0
+    requires order(st, r, 1) == Found(t)
+    requires r.subs[|r.subs| - 1] != []
+    ensures coll(t, r.subs[|r.subs| - 1]) > 0
+  {
+  }
+
+  // -- keyord extras ----------------------------------------------------
+
+  lemma KeyordTotal(a: Ref, b: Ref)
+    requires a.name == b.name
+    ensures keyord(a, b) == -keyord(b, a)
+    ensures keyord(a, b) < 0 || keyord(a, b) == 0 || keyord(a, b) > 0
+  {
+    SubsOrdAntisymmetric(a.subs, b.subs);
+  }
+
   // -- $ORDER is well defined --------------------------------------------
   //
   // The successor is unique because coll is a strict total order, so any
