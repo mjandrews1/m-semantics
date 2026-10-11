@@ -1,6 +1,6 @@
 # Master critical path — all projects (unified)
 
-**Last updated:** 2026-10-11  
+**Last updated:** 2026-10-11 (renamed **JavaM**, fst#10 closed)  
 **Scope:** every open project and outstanding issue — M stack, YottaDB stack, tooling, **and Comdb2**.  
 **Detail docs:**  
 - M ports: `fst/docs/RSM-PORT-COMPLETION.md` *(frozen in fst)* · `~/jvmumps/CRITICAL_PATH.md` · **`~/jvmumps/docs/CATCHUP-2026-10.md`**  
@@ -43,7 +43,8 @@ One **priority-ordered** interleaved path. **Ticket** = GitHub issue when one ex
   P2    ydb-infra#11 U02 replica keep/doc/teardown      ← ops
   P3    pymumps#3    W3 DO/GOTO/XECUTE freeze note      ← scope lock
   P4    jvmumps#24   same note for peer freeze (or dup)
-  P5    rsm#31       coverage matrix refresh            ← docs
+  P5    rsm#31       coverage matrix + Dafny miss map    ← docs
+  P5b   JavaM        Dafny DO/GOTO/trap + 8 misses       ← prove
   P6    m-semantics#12 path refresh (this file)         ← docs
   P7    okanes-mumps#3 Mac binary                       ← optional
   FROZEN fst#10
@@ -82,6 +83,14 @@ One **priority-ordered** interleaved path. **Ticket** = GitHub issue when one ex
 | # | Work | Ticket | Status |
 |---|------|--------|--------|
 | P2.2–P2.4 | M10–M12 | jvmumps#13–#15 | ✅ done 2026-10-10 (was OPEN in 2026-10-09 doc) |
+
+## P2b — JavaM (ex-JvMumps) Dafny / semantics
+
+| # | Work | Ticket | Status |
+|---|------|--------|--------|
+| **P2b.1** | Dafny DO/GOTO/trap (CALL_PC vs JMP) | **JavaM** | **OPEN** |
+| **P2b.2** | Dafny / ISO notes for 8 misses | **JavaM** | **OPEN** |
+| **P2b.3** | Rename docs to JavaM | **JavaM** | **OPEN** |
 
 ## P3 — YottaDB data plane (**ACTIVE**)
 
@@ -150,7 +159,7 @@ One **priority-ordered** interleaved path. **Ticket** = GitHub issue when one ex
 | `mjandrews1/rsm` | **#31** coverage refresh |
 | `mjandrews1/m-semantics` | **#12** path refresh |
 | `mjandrews1/okanes-mumps` | **#3** Mac binary |
-| `mjandrews1/fst` | **#10** parked |
+| `mjandrews1/fst` | **0 open** (#10 closed with freeze) |
 | Others | 0 open |
 
 **Closed recently:** ydb-mesh#4 author-pass · jvmumps#6 `$ORDER` hang · jvmumps#7–#15 · P0 audits.
