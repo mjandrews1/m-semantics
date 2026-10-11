@@ -403,3 +403,9 @@ module MPattern {
   // "a!"?1A.AN = 0  (the '!' is neither alpha nor digit)
 
 }
+
+// ci-probe: unprovable postcondition
+lemma CiProbeBroken()
+  ensures 1 == 2
+{
+}
