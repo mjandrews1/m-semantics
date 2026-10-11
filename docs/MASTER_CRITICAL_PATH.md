@@ -1,6 +1,6 @@
 # Master critical path — all projects (unified)
 
-**Last updated:** 2026-10-09 (fst **FROZEN**; shared docs home = `m-semantics`)  
+**Last updated:** 2026-10-11  
 **Scope:** every open project and outstanding issue — M stack, YottaDB stack, tooling, **and Comdb2**.  
 **Detail docs:**  
 - M ports: `fst/docs/RSM-PORT-COMPLETION.md` *(frozen in fst)* · `~/jvmumps/CRITICAL_PATH.md` · **`~/jvmumps/docs/CATCHUP-2026-10.md`**  
@@ -10,7 +10,7 @@
 **Home of this file:** `m-semantics/docs/MASTER_CRITICAL_PATH.md`  
 **≡ reprint copy:** `~/CRITICAL_PATH.md`
 
-**Focus (2026-10-10):** JvMumps + mJVM primary · RSM only Oracle · Py/C3 peer-proof freeze · O'Kane/FreeM adjuncts only · Comdb2 optional infra.
+**Focus (2026-10-10/11):** JvMumps + mJVM primary · RSM only Oracle · Py/C3 peer-proof freeze · O'Kane/FreeM adjuncts only · Comdb2 optional infra.
 
 ## How to read this
 
@@ -18,145 +18,147 @@ One **priority-ordered** interleaved path. **Ticket** = GitHub issue when one ex
 
 ---
 
-## Project map (2026-10-09)
+## Project map (2026-10-11)
 
 | Project | Role | Stream |
 |---------|------|--------|
 | **RSM** | M oracle (U01) | P1 ports |
-| **PyMumps / C3Mumps / JvMumps** | full-M peer ports | P0 audits + P1 W7–W9 |
-| **mJVM** | JVM-native M (charter) | P2 catch-up |
-| **ydb-py / ydb-mesh / ydb-infra** | YottaDB data plane + hosts | P3 |
+| **PyMumps / C3Mumps / JvMumps** | full-M peer ports | P1 (done at 131/8/0) |
+| **mJVM** | JVM-native M (charter) | P2 (done at 131/8/0 native) |
+| **ydb-py / ydb-mesh / ydb-infra** | YottaDB data plane + hosts | **P3 active** |
 | **okane-mumps** | ISO benchmark (no upstream patches) | P4 |
 | **fst** | search product — **FROZEN 2026-10-09** (reference only) | P5 frozen |
 | **m-lsp / m-semantics** | tooling + Dafny spec + **shared path/coverage docs** | P6 |
 | **comdb2** | Bloomberg clustered RDBMS on U01+U02 | P7 done |
 | **freem** | FreeM ISO/feature/perf (U01+U02) | compare done · upstream #5/#6 |
 
-**fst:** kept for reference, no feature work. Tag `frozen-2026-10-09`. Shared `MASTER_CRITICAL_PATH.md` + `COVERAGE-MATRIX.md` + `coverage_matrix.py` live in **m-semantics**.
+---
+
+## Critical path (order of attack)
+
+```
+  P0    ydb-mesh#12  BM25 PTERM rebuild (TRANS2BIG)     ← blocking ranked search
+  P0b   ydb-mesh#13  ship/verify M DS libs (tools/)     ← local, parallel with P0
+  P1    ydb-infra#1  close JDK host ticket              ← hygiene
+  P2    ydb-infra#11 U02 replica keep/doc/teardown      ← ops
+  P3    pymumps#3    W3 DO/GOTO/XECUTE freeze note      ← scope lock
+  P4    jvmumps#24   same note for peer freeze (or dup)
+  P5    rsm#31       coverage matrix refresh            ← docs
+  P6    m-semantics#12 path refresh (this file)         ← docs
+  P7    okanes-mumps#3 Mac binary                       ← optional
+  FROZEN fst#10
+```
 
 ---
 
-## P0 — JvMumps semantics audits (unblock M-port confidence)
+## P0 — YottaDB search index (ranked)
 
 | # | Work | Ticket | Status |
 |---|------|--------|--------|
-| P0.1 | J26–J50 wants vs ISO table | jvmumps#1 | ✅ done 2026-10-07 |
-| P0.2 | JOB/TX/LOCK vs RSM (+ nested TROLLBACK fix) | jvmumps#2 | ✅ done 2026-10-07 |
-| P0.3 | PatternMatch vs ISO (+ empty-lit / unbounded fixes) | jvmumps#3 | ✅ done 2026-10-07 |
-| P0.4 | Full wave suite drift review | jvmumps#4 | ✅ done 2026-10-08 |
+| **P0.1** | **BM25 PTERM rebuild** (tf + doclen + df + hyphen/phrase) | **ydb-mesh#12** | **OPEN** — `%YDB-E-TRANS2BIG`; shrink TP batch |
+| P0.2 | PTERM v1 postings (empty tf) | — | ✅ 39,994,988 arts · 4.05B postings · 6.36M terms |
+| P0.3 | Preprints medRxiv + bioRxiv 6 months | — | ✅ 11,634 + 38,818 |
+| **P0.4** | **BM25 search QA** (`myasthenia gravis self-care` ranked) | **ydb-mesh#12** | after P0.1 |
 
-## P1 — M-port completion
-
-| # | Work | Ticket | Status |
-|---|------|--------|--------|
-| P1.1 | PyMumps W7 remainder `$ETRAP`/`$ECODE` | pymumps#1 | ✅ 2026-10-08 (C113–C120) |
-| P1.2 | PyMumps W8 specials + WRITE device params | pymumps#1 | ✅ `$Z*` + WRITE *n/#/?n + w9 ACCEPT |
-| P1.3 | PyMumps W9 full-M acceptance vs RSM | pymumps#1 | ✅ **ACCEPT** 131/8/0/0 |
-| P1.4 | C3Mumps W7–W9 | c3mumps#1 | ✅ **ACCEPT** 131/8/0/0 |
-| P1.5 | JvMumps J8–J11 + mJVM M0–M9 | jvmumps#5 | ✅ done 2026-10-08 (ACCEPT) |
-| P1.6 | Coverage matrix all M stacks (no YottaDB) | rsm#30 | ✅ closed 2026-10-09 |
-| **P1.7** | **JvMumps catch-up J12–J17 → 131/8/0** | **jvmumps#7–#12** | ✅ **131/8/0** |
-| **P1.8** | **mJVM catch-up M10–M12 → 131/8/0** | **jvmumps#13–#15** | ✅ **131/8/0** (native too) |
-
-## P2 — mJVM (catch-up)
+## P0b — M data-structure libraries (all tested on U01)
 
 | # | Work | Ticket | Status |
 |---|------|--------|--------|
-| P2.1 | M0–M9 | jvmumps#5 | ✅ done 2026-10-08 |
-| **P2.2** | **M10 subset IF/ELSE/FOR + NEW/KILL/MERGE** | **jvmumps#13** | **OPEN** |
-| **P2.3** | **M11 calls/intrinsics/indirection** | **jvmumps#14** | **OPEN** |
-| **P2.4** | **M12 numerics + parity gate 131/8/0** | **jvmumps#15** | **OPEN** |
+| **P0b.1** | Document API (`tools/README.md`) | **ydb-mesh#13** | **OPEN** |
+| P0b.2 | HMAP / HSTACK / HQUEUE / HHEAP / HPQUE smoke | ydb-mesh#13 | ✅ local U01 green |
+| P0b.3 | Optional RSM oracle run | ydb-mesh#13 | OPEN |
 
-## P3 — YottaDB data plane
+## P1 — M-port completion (historical — **DONE**)
 
 | # | Work | Ticket | Status |
 |---|------|--------|--------|
-| P3.1 | ydb-mesh `related()` QA + gene/drug catalog polish | ydb-mesh#3 | ✅ 2026-10-09 |
-| P3.2 | ydb-py endpoint edge cases + docs | (no ticket) | ✅ 2026-10-09 (A4 run_m + edge tests 22/22) |
-| P3.3 | ydb-py Wave C/D (HTTP + journal/backup smoke) | (no ticket) | ✅ done 2026-10-09 |
-| P3.5 | ydb-mesh author edges | ydb-mesh#3 | ✅ done 2026-10-09 |
-| P3.6 | ydb-infra portal credential rotation | (no ticket) | ✅ done 2026-10-09 |
+| P1.1–P1.5 | Py/C3/Jv W7–W9 + J8–J11 + mJVM M0–M9 | — | ✅ |
+| P1.6 | Coverage matrix | rsm#30 | ✅ closed 2026-10-09 |
+| P1.7 | JvMumps J12–J17 | jvmumps#7–#12 | ✅ **131/8/0** |
+| P1.8 | mJVM M10–M12 + native | jvmumps#13–#15 | ✅ **131/8/0 native** (`fc143c8`) |
+
+## P2 — mJVM (**DONE at 131/8/0** — rows updated)
+
+| # | Work | Ticket | Status |
+|---|------|--------|--------|
+| P2.2–P2.4 | M10–M12 | jvmumps#13–#15 | ✅ done 2026-10-10 (was OPEN in 2026-10-09 doc) |
+
+## P3 — YottaDB data plane (**ACTIVE**)
+
+| # | Work | Ticket | Status |
+|---|------|--------|--------|
+| P3.1–P3.6 | mesh/poly/infra milestones | — | ✅ |
+| P3.4 | Full author-pass PubMed + MARC | ydb-mesh#4 | ✅ **CLOSED** 2026-10-10 |
+| **P3.7** | **BM25 index rebuild** | **ydb-mesh#12** | **OPEN** |
+| **P3.8** | **M DS libraries ship/docs** | **ydb-mesh#13** | **OPEN** |
+| **P3.9** | **U02 replica decision** | **ydb-infra#11** | **OPEN** |
+| **P3.10** | **Host JDK ticket close-out** | **ydb-infra#1** | **OPEN** (JDK 21+25 done; see comment) |
 
 ## P4 — O'Kane GPL Mumps (benchmark only)
 
 | # | Work | Ticket | Status |
 |---|------|--------|--------|
-| P4.1 | Mac + U01/U02 native B-tree | okanes-mumps#1 | ✅ closed 2026-10-09 |
-| P4.2 | Publish ISO score table | okanes-mumps#2 | ✅ done 2026-10-08 (87/36/0) |
-| P4.3 | Classify O'Kane MISSes | okanes-mumps#2 | ✅ closed 2026-10-09 |
+| P4.1–P4.3 | B-tree · ISO table · MISS class | okanes-mumps#1–#2 | ✅ |
+| **P4.4** | **Mac binary unlinked (SyncClock)** | **okanes-mumps#3** | **OPEN** |
 
-## P5 — fst Track F — **FROZEN**
-
-| # | Work | Ticket | Status |
-|---|------|--------|--------|
-| P5.0 | Gold C second judge / ranking items 4–6 | — | **removed** from path (2026-10-09 user) |
-| P5.5 | Restore Horn B scripts | (no ticket; item 7) | ✅ 2026-10-08 |
-| P5.f | **Freeze: reference only, no feature work** | fst#10 parked | **FROZEN 2026-10-09** |
-
-## P6 — tooling
+## P5 — fst — **FROZEN**
 
 | # | Work | Ticket | Status |
 |---|------|--------|--------|
-| P6.1 | m-lsp DO/FOR block context | m-lsp#1 | ✅ closed |
-| P6.2 | m-lsp FOR arg-list + indirect `@` | m-lsp#2 | ✅ closed |
-| P6.2b | m-lsp FOR hover edge cases | m-lsp#3 | ✅ closed 2026-10-09 |
-| P6.3 | m-semantics (no open gap) | (no ticket) | idle |
-| **P6.4** | **Shared path/coverage docs hosted here** | (no ticket) | ✅ 2026-10-09 (moved from fst) |
+| P5.f | Freeze: reference only | fst#10 | **FROZEN** (parked) |
 
-## P7 — Comdb2 on U01 + U02
+## P6 — tooling / docs
 
 | # | Work | Ticket | Status |
 |---|------|--------|--------|
-| P7.1 | Deps + clone + cmake + **GCC 15** flags + build | (no ticket) | ✅ both hosts `eb6dfab` |
-| P7.2 | `make install` → `/opt/bb` | (no ticket) | ✅ both hosts |
-| P7.3 | pmux + single-node `testdb` + SQL smoke | (no ticket) | ✅ READY (`DIRECTIO 0`) |
-| P7.4 | 2-node cluster (`cluster nodes` + `copycomdb2`) | (no ticket) | ✅ READY · master `utility-02` |
-| P7.5 | UFW Tailscale-only + systemd + logs | (no ticket) | ✅ done 2026-10-08 |
+| P6.1–P6.2b | m-lsp DO/FOR/@ | m-lsp#1–#3 | ✅ |
+| **P6.3** | **Coverage matrix refresh** (131/8/0 + native) | **rsm#31** | **OPEN** |
+| **P6.4** | **Refresh this path + `~/CRITICAL_PATH.md`** | **m-semantics#12** | **OPEN** |
 
-### Optional track (2026-10-09)
+## P7 — Comdb2 / FreeM
 
-| # | Work | Ticket | Status | Parallel with author-pass? |
-|---|------|--------|--------|----------------------------|
-| **P3.5b** | **MARC author-pass** (`--marc` catplus/serfile) | **ydb-mesh#4** | **QUEUED** (chain) | **No** — same `^AUTHOR`/`^GRAPH` store |
-| **P3.3b** | **Custom web routes** (static `/var/ydb/web` + `/api/*` + Caddy `/ydb`) | (no ticket) | ✅ 2026-10-09 | **Yes** |
-| **P8** | FreeM upstream watch | freem-ops#1 | ✅ **closed 2026-10-09** — not actively developed; wait indefinitely on #5/#6 | — |
-
-Detail: `~/comdb2/CRITICAL_PATH.md`.
+| # | Work | Ticket | Status |
+|---|------|--------|--------|
+| P7.1–P7.5 | Comdb2 U01+U02 cluster | — | ✅ |
+| P8 | FreeM upstream | freem-ops#1 | ✅ closed · WAIT indefinitely #5/#6 |
 
 ---
 
-## Interleaved path (order of attack)
+## Scope lock (2026-10-10 strategy)
 
-```
-  P1.7   JvMumps J12–J17 catch-up → 131/8/0     (J12–J13 done; now J14–J17)
-  P1.8   mJVM M10–M12 catch-up → 131/8/0        (after / shared semantics with J12–J16)
-  P3.5b  MARC author-pass (ydb-mesh#4)          (U01, in flight — independent)
+| | Role |
+|--|------|
+| **JvMumps + mJVM** | primary ports |
+| **RSM** | only Oracle |
+| **PyMumps / C3Mumps** | peer-proof **freeze** (corpus/regression only) |
+| **O'Kane / FreeM** | adjuncts, never oracles |
+| **Comdb2** | optional infra |
+| **YottaDB** | storage plane (not an M stack) |
 
-  FROZEN: fst (reference only)
-  BELAYED: fst Gold C · ydb-py GUI
-```
+**W3 / DO-GOTO-XECUTE:** `pymumps#3` + `jvmumps#24` — confirm freeze; do not expand peer scopes.
+
+---
+
+## Issue index (open GitHub 2026-10-11)
+
+| Repo | Open |
+|------|------|
+| `mjandrews1/ydb-mesh` | **#12** BM25 TRANS2BIG · **#13** M DS libs |
+| `mjandrews1/ydb-infra` | **#1** host JDK (commented 2026-10-11) · **#11** U02 replica |
+| `mjandrews1/jvmumps` | **#24** W3 freeze note |
+| `mjandrews1/pymumps` | **#3** W3 freeze note |
+| `mjandrews1/rsm` | **#31** coverage refresh |
+| `mjandrews1/m-semantics` | **#12** path refresh |
+| `mjandrews1/okanes-mumps` | **#3** Mac binary |
+| `mjandrews1/fst` | **#10** parked |
+| Others | 0 open |
+
+**Closed recently:** ydb-mesh#4 author-pass · jvmumps#6 `$ORDER` hang · jvmumps#7–#15 · P0 audits.
 
 ---
 
 ## Next action (do this now)
 
-**IN FLIGHT:** PubMed **author-pass** on U01 (`author-pass.log`) · tracker **ydb-mesh#4** · MARC chained behind it.
-**NOW:** **ydb-mesh#4** author-pass (PubMed 1104/1334 on U01; MARC chained). Close with totals when both done.
-**DONE 2026-10-10:** P1.7 JvMumps + P1.8 mJVM **and** native mJVM — all **131/8/0**. jvmumps#7–#15 closed.
-
-**P5 frozen:** fst reference only — do not open feature work. Tag `frozen-2026-10-09`.
-**P8 closed:** FreeM not under active development — indefinite upstream wait (CoherentLogic #5/#6).
-
----
-
-## Issue index (open GitHub)
-
-| Repo | Open |
-|------|------|
-| `mjandrews1/jvmumps` | **0 open** — #7–#15 closed 2026-10-10 (JvMumps + native mJVM 131/8/0) |
-| `mjandrews1/ydb-mesh` | **#4** full author-pass **IN FLIGHT** (PubMed; MARC chained) |
-| `mjandrews1/fst` | **#10** two-week work log — **parked** with freeze |
-
-**All other repos: 0 open** (pymumps · c3mumps · ydb-py · ydb-infra · okanes · freem-ops · m-lsp · rsm · **c3m** · **c3fst**).
-
-**Legacy closed 2026-09-25 era (c3m/c3fst, rsm#18 deprecated):** 11 c3fst + 18 c3m issues closed as obsolete.
+**NOW:** **ydb-mesh#12** — fix `write_batch` size (50–100 / TP or split TPs), rerun `term_index build` on U01, then `bm25_search` smoke.  
+**Parallel:** **ydb-mesh#13** docs for HMAP/HSTACK/HQUEUE/HHEAP/HPQUE.  
+**Then:** close **ydb-infra#1** · decide **ydb-infra#11** · freeze notes **pymumps#3** / **jvmumps#24** · refresh matrix **rsm#31**.
