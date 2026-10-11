@@ -36,7 +36,7 @@
 - [ ] PTERM v2 complete + ranked search works on a sample query  
 - [ ] MeshGraph name on README/portal; path doc current  
 - [ ] JavaM public docs say **JavaM**  
-- [ ] One of: U02 replica decided **or** deliberately deferred with date  
+- [x] **U02: KEEP** replica + coldstore (user 2026-10-11); runbook still under ydb-infra#11  
 - [ ] No Friday-night sprints
 - [ ] **ydb-infra#12** maintenance run recorded (or scheduled for Fri)
 
