@@ -29,7 +29,7 @@
 | **Tue** | **ydb-mesh#14** branding + **m-semantics#15** path/JavaM URLs | Tag prep notes |
 | **Wed** | **JavaM#27** rename docs/CI | **ydb-mesh#24** search UX stub if BM25 green |
 | **Thu** | **ydb-infra#11** U02 replica decision | **pymumps#3** freeze note (15 min) |
-| **Fri** | **m-semantics#22** tags if gates pass; close what shipped | Plan next week below |
+| **Fri** | **m-semantics#22** tags if gates pass; close what shipped | **ydb-infra#12** weekly host maintenance + logs + remote access |
 | **Sat** | **Reflection only** | Monthly if 1st Saturday |
 
 ### Success criteria (Fri night)
@@ -38,6 +38,7 @@
 - [ ] JavaM public docs say **JavaM**  
 - [ ] One of: U02 replica decided **or** deliberately deferred with date  
 - [ ] No Friday-night sprints
+- [ ] **ydb-infra#12** maintenance run recorded (or scheduled for Fri)
 
 ### Explicitly **not** this week
 - FileMan Tier A (#32) · full VistA (#34) · Dafny #25–26 · benches #29–33 · REPLs #21/35/36 · stdlib #28  
