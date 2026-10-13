@@ -320,6 +320,19 @@ module MSemantics {
     else lexCompare(a, b)
   }
 
+  // C24 / T11 / T11b.  ISO 11756 8.3 `=` / `'=`.
+  // Same numeric-vs-string rule as cmp, but equality:
+  //   both numeric strings  -> toNum(a) == toNum(b)   (non-canonical forms
+  //                          "1.0", "1E2", "+1" equal their canonical value)
+  //   otherwise             -> bytewise string equality
+  // Empty is NOT a numeric string (isNum("") is false), so ""=0 is a string
+  // compare and is false -- that is T11 / T11b (peer ISO; RSM empty-output bug).
+  function mEq(a: Bytes, b: Bytes): bool
+  {
+    if isNum(a) && isNum(b) then toNum(a) == toNum(b)
+    else a == b
+  }
+
   // ----- key collation ---------------------------------------------------
   // D1-D4.  util/key.c:36 -- "Key is in order: NEGATIVE NUMBER . ZERO .
   // POSITIVE NUMBER . STRING".  Empty sorts before everything and is the
@@ -1172,6 +1185,55 @@ module MSemantics {
       assert toNum(mstr(x)) == x;
       assert toNum(mstr(y)) == y;
     }
+  }
+
+  // -- corpus miss proofs: C24, C16, T11, T11b ---------------------------
+  // Peer ISO rule (Py/C3/Jv/mJVM).  RSM expecteds disagree; that is why
+  // these eight show as MISS/DIVERGES on the shared corpus.
+
+  // C24.eq-noncanonical — non-canonical numeric strings equal their value.
+  lemma C24NonCanonicalEq()
+    ensures mEq("1.0", "1")
+    ensures mEq("1E2", "100")
+    ensures mEq("+1", "1")
+  {
+    assert isNum("1.0") && isNum("1");
+    assert isNum("1E2") && isNum("100");
+    assert isNum("+1") && isNum("1");
+    // toNum is the ncopy-style parse; these are the C24 fixtures
+    assert toNum("1.0") == toNum("1");
+    assert toNum("1E2") == toNum("100");
+    assert toNum("+1") == toNum("1");
+  }
+
+  // C16.str-compare — non-numeric operands use string order; case-sensitive.
+  lemma C16StringCompare()
+    ensures cmp("a", "b") == -1
+    ensures cmp("b", "a") == 1
+    ensures !mEq("a", "A")
+  {
+    assert !isNum("a") && !isNum("b") && !isNum("A");
+    assert lexCompare("a", "b") == -1;
+    assert lexCompare("b", "a") == 1;
+  }
+
+  // T11.empty-vs-zero — "" is not a numeric string, so ""=0 is string eq.
+  lemma T11EmptyNotZero()
+    ensures !isNum([])
+    ensures !mEq([], "0")
+    ensures !mEq("", "0")
+  {
+    assert parseNum([], 0) == NO_MATCH;
+    assert !mEq([], "0");
+  }
+
+  // T11b.zero-vs-empty — equality is symmetric.
+  lemma T11bZeroNotEmpty()
+    ensures !mEq("0", [])
+    ensures !mEq("0", "")
+  {
+    T11EmptyNotZero();
+    assert !mEq("0", []);
   }
 
   // -- recorded RSM divergences ------------------------------------------
