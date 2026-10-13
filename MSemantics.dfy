@@ -1236,6 +1236,66 @@ module MSemantics {
     assert !mEq("0", []);
   }
 
+  // T11d.cmp-operators — relational opcodes follow cmp / mEq.
+  // Peers: ("a"<"b")=1 ("a"="a")=1 ("b">"a")=1 (1<2)=1 (1=2)=0
+  // RSM ncopy makes "a"<"b" numeric 0<0 (lt=0); that is the upstream miss.
+  lemma T11dRelationalOps()
+    ensures cmp("a", "b") == -1
+    ensures mEq("a", "a")
+    ensures cmp("b", "a") == 1
+    ensures cmp("1", "2") == -1
+    ensures !mEq("1", "2")
+    ensures cmp("2", "1") == 1
+    ensures mEq("2", "2")
+  {
+    assert !isNum("a") && !isNum("b");
+    assert isNum("1") && isNum("2");
+    assert toNum("1") == 1.0 && toNum("2") == 2.0;
+    assert lexCompare("a", "b") == -1;
+    assert lexCompare("b", "a") == 1;
+    assert toNum("1") < toNum("2");
+    assert toNum("2") > toNum("1");
+  }
+
+  // T12 / T12b.  ISO 7.2.4 ELSE.
+  // Minimal IF/ELSE statement model: false test takes the ELSE arm; a nested
+  // IF in the ELSE arm is exactly "ELSE binds to the innermost / next IF".
+  datatype Stmt =
+    | W(tag: string)
+    | If(test: bool, thn: Stmt, els: Stmt)
+
+  function run(s: Stmt): seq<string>
+  {
+    match s
+    case W(tag) => [tag]
+    case If(test, thn, els) => if test then run(thn) else run(els)
+  }
+
+  // T12.ELSE-binding: S X=0 I X=1 W "THEN",! E  W "ELSE",!  → "ELSE"
+  lemma T12ElseBinding()
+    ensures run(If(false, W("THEN"), W("ELSE"))) == ["ELSE"]
+    ensures run(If(true, W("THEN"), W("ELSE"))) == ["THEN"]
+  { }
+
+  // T12b.ELSE-chain: S X=2 I X=1 W "a",! E  I X=2 W "b",! E  W "c",!
+  // false outer IF → ELSE arm = nested IF; that nested IF's truth picks "b".
+  lemma T12bElseChain()
+    ensures run(If(false, W("a"), If(true, W("b"), W("c")))) == ["b"]
+    ensures run(If(false, W("a"), If(false, W("b"), W("c")))) == ["c"]
+  { }
+
+  // T15.tlevel.  ISO 6.3.20: $TLEVEL is defined; outside a transaction it is 0.
+  // RSM raises "Undefined special variable" (upstream miss).  Peers print TLEVEL=0.
+  function tlevel(inTransaction: bool): int
+  {
+    if inTransaction then 1 else 0
+  }
+
+  lemma T15TlevelOutsideTX()
+    ensures tlevel(false) == 0
+    ensures tlevel(true) == 1
+  { }
+
   // -- recorded RSM divergences ------------------------------------------
   //
   // rsm#11a  "a"<"b" == 0 in RSM (both ncopy'd to 0).  We say -1.
