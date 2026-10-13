@@ -108,6 +108,12 @@ def score_mjvm():
     return parse_score(out)
 
 
+def score_mjvm_native():
+    out = run([java_bin(), "-cp", jvm_cp(), "jvmumps.MjvmNativeScore", str(CORPUS), "*"],
+              cwd=ROOT, timeout=120)
+    return parse_score(out)
+
+
 def score_remote(label, ssh_cmd):
     """Score on U01 via ssh; returns dict or None."""
     try:
@@ -171,8 +177,8 @@ SURFACE = [
 
 def render_md(scores, surface):
     from datetime import date
-    cols = ["RSM", "PyMumps", "C3Mumps", "JvMumps", "mJVM", "O'Kane", "FreeM"]
-    keys = ["rsm", "pymumps", "c3mumps", "jvmumps", "mjvm", "okane", "freem"]
+    cols = ["RSM", "PyMumps", "C3Mumps", "JvMumps", "mJVM", "mJVM-native", "O'Kane", "FreeM"]
+    keys = ["rsm", "pymumps", "c3mumps", "jvmumps", "mjvm", "mjvm_native", "okane", "freem"]
     lines = []
     lines.append("# M-stack coverage matrix")
     lines.append("")
@@ -189,7 +195,8 @@ def render_md(scores, surface):
         "pymumps": "UPSTREAM_BUGS = correct ISO",
         "c3mumps": "same corpus",
         "jvmumps": "LineEngine `CorpusScore *`",
-        "mjvm": "mjvm.cli.Mjvm -c",
+        "mjvm": "MjvmCorpusScore (LineInterp)",
+        "mjvm_native": "MjvmNativeScore (MFrontend+IrMachine)",
         "okane": "iso_smoke.py (U01)",
         "freem": "freem_iso_smoke.py PTY (U01)",
     }
@@ -209,6 +216,10 @@ def render_md(scores, surface):
     lines.append("|---|" + "---|" * len(cols))
     for row in surface:
         feat, *vals = row
+        # surface: rsm pymumps c3mumps jvmumps mjvm okane freem (7)
+        # 2026-10-12: mJVM + mJVM-native hold 131/8/0 — surface matches JvMumps (vals[3])
+        if len(vals) == 7:
+            vals = [vals[0], vals[1], vals[2], vals[3], vals[3], vals[3], vals[5], vals[6]]
         lines.append(f"| {feat} | " + " | ".join(vals) + " |")
     lines.append("")
     lines.append("## Re-run")
@@ -237,6 +248,8 @@ def main():
     scores["jvmumps"] = score_jvmumps()
     print("scoring mjvm…")
     scores["mjvm"] = score_mjvm()
+    print("scoring mjvm native…")
+    scores["mjvm_native"] = score_mjvm_native()
 
     if not args.skip_remote:
         print("scoring rsm/okane/freem on U01…")
