@@ -1,16 +1,18 @@
 # Master critical path — all projects (unified)
 
-**Last updated:** 2026-10-11 (renamed **JavaM**, fst#10 closed)  
+**Last updated:** 2026-10-13 (m-semantics#15: **MeshGraph** naming + **JavaM** issue URLs)  
 **Scope:** every open project and outstanding issue — M stack, YottaDB stack, tooling, **and Comdb2**.  
 **Detail docs:**  
 - M ports: `fst/docs/RSM-PORT-COMPLETION.md` *(frozen in fst)* · `~/jvmumps/CRITICAL_PATH.md` · **`~/jvmumps/docs/CATCHUP-2026-10.md`**  
-- YottaDB: `~/ydb-py/CRITICAL_PATH.md` · `~/ydb-mesh/CRITICAL_PATH.md` · `~/ydb-infra`  
+- YottaDB: `~/ydb-py/CRITICAL_PATH.md` · **MeshGraph** `~/ydb-mesh/CRITICAL_PATH.md` · `~/ydb-infra`  
 - **Comdb2:** `~/comdb2/CRITICAL_PATH.md`  
 - fst Track F/R: `fst/docs/CRITICAL_PATH.md` *(frozen)*  
 **Home of this file:** `m-semantics/docs/MASTER_CRITICAL_PATH.md`  
 **≡ reprint copy:** `~/CRITICAL_PATH.md`
 
-**Focus (2026-10-10/11):** JvMumps + mJVM primary · RSM only Oracle · Py/C3 peer-proof freeze · O'Kane/FreeM adjuncts only · Comdb2 optional infra.
+**Name lock:** **MeshGraph** = product name · **`ydb-mesh`** = code/repo · **JavaM** = JvMumps product (`mjandrews1/JavaM`) · checkout dir may still be `~/jvmumps`.
+
+**Focus (2026-10-10/11):** JavaM + mJVM primary · RSM only Oracle · Py/C3 peer-proof freeze · O'Kane/FreeM adjuncts only · Comdb2 optional infra.
 
 ## How to read this
 
@@ -23,9 +25,9 @@ One **priority-ordered** interleaved path. **Ticket** = GitHub issue when one ex
 | Project | Role | Stream |
 |---------|------|--------|
 | **RSM** | M oracle (U01) | P1 ports |
-| **PyMumps / C3Mumps / JvMumps** | full-M peer ports | P1 (done at 131/8/0) |
+| **PyMumps / C3Mumps / JavaM** (ex-JvMumps) | full-M peer ports | P1 (done at 131/8/0) |
 | **mJVM** | JVM-native M (charter) | P2 (done at 131/8/0 native) |
-| **ydb-py / ydb-mesh / ydb-infra** | YottaDB data plane + hosts | **P3 active** |
+| **MeshGraph** (`ydb-mesh`) · **ydb-py** / **ydb-infra** | YottaDB citation index + data plane | **P3 active** |
 | **okane-mumps** | ISO benchmark (no upstream patches) | P4 |
 | **fst** | search product — **FROZEN 2026-10-09** (reference only) | P5 frozen |
 | **m-lsp / m-semantics** | tooling + Dafny spec + **shared path/coverage docs** | P6 |
@@ -42,7 +44,7 @@ One **priority-ordered** interleaved path. **Ticket** = GitHub issue when one ex
   P1    ydb-infra#1  close JDK host ticket              ← hygiene
   P2    ydb-infra#11 U02 replica keep/doc/teardown      ← ops
   P3    pymumps#3    W3 DO/GOTO/XECUTE freeze note      ← scope lock
-  P4    jvmumps#24   same note for peer freeze (or dup)
+  P4    JavaM#24   same note for peer freeze (or dup)
   P5    rsm#31       coverage matrix + Dafny miss map    ← docs
   P5b   JavaM        Dafny DO/GOTO/trap + 8 misses       ← prove
   P6    m-semantics#12 path refresh (this file)         ← docs
@@ -75,14 +77,14 @@ One **priority-ordered** interleaved path. **Ticket** = GitHub issue when one ex
 |---|------|--------|--------|
 | P1.1–P1.5 | Py/C3/Jv W7–W9 + J8–J11 + mJVM M0–M9 | — | ✅ |
 | P1.6 | Coverage matrix | rsm#30 | ✅ closed 2026-10-09 |
-| P1.7 | JvMumps J12–J17 | jvmumps#7–#12 | ✅ **131/8/0** |
-| P1.8 | mJVM M10–M12 + native | jvmumps#13–#15 | ✅ **131/8/0 native** (`fc143c8`) |
+| P1.7 | JvMumps J12–J17 | JavaM#7–#12 | ✅ **131/8/0** |
+| P1.8 | mJVM M10–M12 + native | JavaM#13–#15 | ✅ **131/8/0 native** (`fc143c8`) |
 
 ## P2 — mJVM (**DONE at 131/8/0** — rows updated)
 
 | # | Work | Ticket | Status |
 |---|------|--------|--------|
-| P2.2–P2.4 | M10–M12 | jvmumps#13–#15 | ✅ done 2026-10-10 (was OPEN in 2026-10-09 doc) |
+| P2.2–P2.4 | M10–M12 | JavaM#13–#15 | ✅ done 2026-10-10 (was OPEN in 2026-10-09 doc) |
 
 ## P2b — JavaM (ex-JvMumps) Dafny / semantics
 
@@ -144,7 +146,7 @@ One **priority-ordered** interleaved path. **Ticket** = GitHub issue when one ex
 | **Comdb2** | optional infra |
 | **YottaDB** | storage plane (not an M stack) |
 
-**W3 / DO-GOTO-XECUTE:** `pymumps#3` + `jvmumps#24` — confirm freeze; do not expand peer scopes.
+**W3 / DO-GOTO-XECUTE:** `pymumps#3` + `JavaM#24` — confirm freeze; do not expand peer scopes.
 
 ---
 
@@ -152,7 +154,7 @@ One **priority-ordered** interleaved path. **Ticket** = GitHub issue when one ex
 
 | Repo | Open |
 |------|------|
-| `mjandrews1/ydb-mesh` | **#12** BM25 TRANS2BIG · **#13** M DS libs |
+| `mjandrews1/ydb-mesh` (**MeshGraph**) | **#12** BM25 TRANS2BIG · **#13** M DS libs |
 | `mjandrews1/ydb-infra` | **#1** host JDK (commented 2026-10-11) · **#11** U02 replica |
 | `mjandrews1/jvmumps` | **#24** W3 freeze note |
 | `mjandrews1/pymumps` | **#3** W3 freeze note |
@@ -162,7 +164,7 @@ One **priority-ordered** interleaved path. **Ticket** = GitHub issue when one ex
 | `mjandrews1/fst` | **0 open** (#10 closed with freeze) |
 | Others | 0 open |
 
-**Closed recently:** ydb-mesh#4 author-pass · jvmumps#6 `$ORDER` hang · jvmumps#7–#15 · P0 audits.
+**Closed recently:** ydb-mesh#4 author-pass · JavaM#6 `$ORDER` hang · JavaM#7–#15 · P0 audits.
 
 ---
 
@@ -170,4 +172,4 @@ One **priority-ordered** interleaved path. **Ticket** = GitHub issue when one ex
 
 **NOW:** **ydb-mesh#12** — fix `write_batch` size (50–100 / TP or split TPs), rerun `term_index build` on U01, then `bm25_search` smoke.  
 **Parallel:** **ydb-mesh#13** docs for HMAP/HSTACK/HQUEUE/HHEAP/HPQUE.  
-**Then:** close **ydb-infra#1** · decide **ydb-infra#11** · freeze notes **pymumps#3** / **jvmumps#24** · refresh matrix **rsm#31**.
+**Then:** close **ydb-infra#1** · decide **ydb-infra#11** · freeze notes **pymumps#3** / **JavaM#24** · refresh matrix **rsm#31**.
