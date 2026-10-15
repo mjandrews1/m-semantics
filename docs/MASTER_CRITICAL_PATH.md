@@ -1,175 +1,126 @@
 # Master critical path — all projects (unified)
 
-**Last updated:** 2026-10-13 (m-semantics#15: **MeshGraph** naming + **JavaM** issue URLs)  
-**Scope:** every open project and outstanding issue — M stack, YottaDB stack, tooling, **and Comdb2**.  
-**Detail docs:**  
-- M ports: `fst/docs/RSM-PORT-COMPLETION.md` *(frozen in fst)* · `~/jvmumps/CRITICAL_PATH.md` · **`~/jvmumps/docs/CATCHUP-2026-10.md`**  
-- YottaDB: `~/ydb-py/CRITICAL_PATH.md` · **MeshGraph** `~/ydb-mesh/CRITICAL_PATH.md` · `~/ydb-infra`  
-- **Comdb2:** `~/comdb2/CRITICAL_PATH.md`  
-- fst Track F/R: `fst/docs/CRITICAL_PATH.md` *(frozen)*  
-**Home of this file:** `m-semantics/docs/MASTER_CRITICAL_PATH.md`  
-**≡ reprint copy:** `~/CRITICAL_PATH.md`
+**Last updated:** 2026-10-15 · **Home:** `m-semantics/docs/MASTER_CRITICAL_PATH.md` · **≡** `~/CRITICAL_PATH.md`  
+**Detail docs:** JavaM `jvmumps/CRITICAL_PATH.md` · MeshGraph `ydb-mesh/CRITICAL_PATH.md` · tsx · ydb-infra · `jvmumps/docs/ROADMAP-0.5.0.md` · `jvmumps/docs/BENCH.md`
 
-**Name lock:** **MeshGraph** = product name · **`ydb-mesh`** = code/repo · **JavaM** = JvMumps product (`mjandrews1/JavaM`) · checkout dir may still be `~/jvmumps`.
+**Name lock:** **MeshGraph** = product · **`ydb-mesh`** = code · **JavaM** = `mjandrews1/JavaM` · **tsx** = Comdb2 time-series.
 
-**Focus (2026-10-10/11):** JavaM + mJVM primary · RSM only Oracle · Py/C3 peer-proof freeze · O'Kane/FreeM adjuncts only · Comdb2 optional infra.
+**Focus (2026-10-15):** JavaM **v0.5.0** perf close-out · MeshGraph post-BM25 · tsx P1–P2 · infra U03.
 
-## How to read this
+## How to read
 
-One **priority-ordered** interleaved path. **Ticket** = GitHub issue when one exists; **(no ticket)** = real work without an issue. Status: **OPEN** · **IN FLIGHT** · **WAIT** · **FROZEN** · **BELAYED**.
+Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN**.
 
 ---
 
-## Project map (2026-10-11)
+## Project map
 
 | Project | Role | Stream |
 |---------|------|--------|
-| **RSM** | M oracle (U01) | P1 ports |
-| **PyMumps / C3Mumps / JavaM** (ex-JvMumps) | full-M peer ports | P1 (done at 131/8/0) |
-| **mJVM** | JVM-native M (charter) | P2 (done at 131/8/0 native) |
-| **MeshGraph** (`ydb-mesh`) · **ydb-py** / **ydb-infra** | YottaDB citation index + data plane | **P3 active** |
-| **okane-mumps** | ISO benchmark (no upstream patches) | P4 |
-| **fst** | search product — **FROZEN 2026-10-09** (reference only) | P5 frozen |
-| **m-lsp / m-semantics** | tooling + Dafny spec + **shared path/coverage docs** | P6 |
-| **comdb2** | Bloomberg clustered RDBMS on U01+U02 | P7 done |
-| **freem** | FreeM ISO/feature/perf (U01+U02) | compare done · upstream #5/#6 |
+| **RSM** | M oracle (U01) | never a port target |
+| **JavaM** (JvMumps + mJVM) | full-M + JVM-native M · **131/8/0** | **P1** |
+| **MeshGraph** (`ydb-mesh`) | YottaDB citation index (BM25 live) | **P2** |
+| **tsx** | Comdb2 time-series (USGS/NOAA/pinksheet) | **P3** |
+| **ydb-infra / utility-03** | hosts, Caddy, backup, U03 edge | **P4** |
+| **m-semantics / m-lsp** | Dafny spec + docs | P5 |
+| **PyMumps / C3Mumps** | peer-proof **freeze** | FROZEN |
+| **fst** | frozen | FROZEN |
+| **okane / freem** | adjunct / upstream WAIT | P6 |
+| **comdb2** | SQL plane (U01+U02 cluster READY) | infra |
 
 ---
 
-## Critical path (order of attack)
+## Critical path (2026-10-15)
 
 ```
-  P0    ydb-mesh#12  BM25 PTERM rebuild (TRANS2BIG)     ← blocking ranked search
-  P0b   ydb-mesh#13  ship/verify M DS libs (tools/)     ← local, parallel with P0
-  P1    ydb-infra#1  close JDK host ticket              ← hygiene
-  P2    ydb-infra#11 U02 replica keep/doc/teardown      ← ops
-  P3    pymumps#3    W3 DO/GOTO/XECUTE freeze note      ← scope lock
-  P4    JavaM#24   same note for peer freeze (or dup)
-  P5    rsm#31       coverage matrix + Dafny miss map    ← docs
-  P5b   JavaM        Dafny DO/GOTO/trap + 8 misses       ← prove
-  P6    m-semantics#12 path refresh (this file)         ← docs
-  P7    okanes-mumps#3 Mac binary                       ← optional
-  FROZEN fst#10
+  P0  JavaM PR#127 / #126     Cdb2 LOCK + TSTART          ← merge
+  P0b JavaM #122 #123         store audit close-out
+  P1  JavaM v0.5.0            perf cycle → tag v0.5.0
+  P2  MeshGraph #15 #23 #24   related_rev · orientation · portal UX
+  P3  tsx#4                   archive cdb2sql PATH (broken cron)
+  P4  tsx #2 #3               replica+caps · terminal
+  P5  ydb-infra #14–#23       utility-03 edge / backup / DNS
+  P6  JavaM #32               FileMan Tier A (1.0 gate)
+  P7  JavaM #25 #26           Dafny DO/GOTO + 8 misses
 ```
 
 ---
 
-## P0 — YottaDB search index (ranked)
+## P0 — JavaM v0.5.0 remainder
 
-| # | Work | Ticket | Status |
-|---|------|--------|--------|
-| **P0.1** | **BM25 PTERM rebuild** (tf + doclen + df + hyphen/phrase) | **ydb-mesh#12** | **OPEN** — `%YDB-E-TRANS2BIG`; shrink TP batch |
-| P0.2 | PTERM v1 postings (empty tf) | — | ✅ 39,994,988 arts · 4.05B postings · 6.36M terms |
-| P0.3 | Preprints medRxiv + bioRxiv 6 months | — | ✅ 11,634 + 38,818 |
-| **P0.4** | **BM25 search QA** (`myasthenia gravis self-care` ranked) | **ydb-mesh#12** | after P0.1 |
+| Work | Ticket | Status |
+|------|--------|--------|
+| PerfMatrix / matrix / footprint / store-lock / findings | JavaM#97–#102 #31 #33 | **DONE** |
+| Cdb2 LOCK + TSTART undo | JavaM#126 (PR #127) | **IN FLIGHT** |
+| Concurrency + store matrix | JavaM#122 #123 | **OPEN** |
+| Next tag v0.5.0 | — | after #122/#123/#126 |
 
-## P0b — M data-structure libraries (all tested on U01)
+## P1 — JavaM 1.0 track
 
-| # | Work | Ticket | Status |
-|---|------|--------|--------|
-| **P0b.1** | Document API (`tools/README.md`) | **ydb-mesh#13** | **OPEN** |
-| P0b.2 | HMAP / HSTACK / HQUEUE / HHEAP / HPQUE smoke | ydb-mesh#13 | ✅ local U01 green |
-| P0b.3 | Optional RSM oracle run | ydb-mesh#13 | OPEN |
+| Work | Ticket | Status |
+|------|--------|--------|
+| FileMan Tier A no ENGINE GAP | JavaM#32 | **OPEN** (1.0 gate) |
+| Dafny CALL_PC/JMP + 8 misses | JavaM#25 #26 | **OPEN** |
+| REPL | JavaM#35 #36 | **OPEN** |
+| VistA full run | JavaM#34 | **OPEN** |
+| Rename hygiene | JavaM#27 | **OPEN** (docs refresh in this pass) |
 
-## P1 — M-port completion (historical — **DONE**)
+## P2 — MeshGraph (post-BM25)
 
-| # | Work | Ticket | Status |
-|---|------|--------|--------|
-| P1.1–P1.5 | Py/C3/Jv W7–W9 + J8–J11 + mJVM M0–M9 | — | ✅ |
-| P1.6 | Coverage matrix | rsm#30 | ✅ closed 2026-10-09 |
-| P1.7 | JvMumps J12–J17 | JavaM#7–#12 | ✅ **131/8/0** |
-| P1.8 | mJVM M10–M12 + native | JavaM#13–#15 | ✅ **131/8/0 native** (`fc143c8`) |
+| Work | Ticket | Status |
+|------|--------|--------|
+| PTERM BM25 rebuild + catch-up + smoke | ydb-mesh#12 | **DONE** 2026-10-15 |
+| M DS libs HMAP/HSTACK/… | ydb-mesh#13 | **DONE** |
+| Author-pass PubMed + MARC | ydb-mesh#4 | **DONE** |
+| `related_rev()` / out-edges | ydb-mesh#15 | **OPEN** |
+| MeSH edge orientation | ydb-mesh#23 | **OPEN** |
+| Portal search UX (top-k + titles) | ydb-mesh#24 | **OPEN** |
+| Perf + limit probes | ydb-mesh#20 | **OPEN** |
+| MCP registry | ydb-mesh#28 | **OPEN** |
 
-## P2 — mJVM (**DONE at 131/8/0** — rows updated)
+**No MeshGraph cron** — rebuilds were one-shots. Live: `mesh-search.service`, YDB web, dashboard.
 
-| # | Work | Ticket | Status |
-|---|------|--------|--------|
-| P2.2–P2.4 | M10–M12 | JavaM#13–#15 | ✅ done 2026-10-10 (was OPEN in 2026-10-09 doc) |
+## P3 — tsx scheduled jobs (U01)
 
-## P2b — JavaM (ex-JvMumps) Dafny / semantics
+| Job | Cron | Status |
+|-----|------|--------|
+| USGS acquire | `:43` hourly | **OK** |
+| USGS load | `:50` hourly | **OK** |
+| NOAA wx | `:20` hourly | **OK** |
+| cap_check | `:17` hourly | **OK** (0.27/2 GB active) |
+| **archive_cdb2** | `27 3 * * *` | **BROKEN** — `cdb2sql` PATH → **tsx#4** |
+| Pink Sheet | 5th 04:15 | OK (monthly) |
 
-| # | Work | Ticket | Status |
-|---|------|--------|--------|
-| **P2b.1** | Dafny DO/GOTO/trap (CALL_PC vs JMP) | **JavaM** | **OPEN** |
-| **P2b.2** | Dafny / ISO notes for 8 misses | **JavaM** | **OPEN** |
-| **P2b.3** | Rename docs to JavaM | **JavaM** | **OPEN** |
+| Work | Ticket | Status |
+|------|--------|--------|
+| archive PATH fix | tsx#4 | **OPEN** |
+| P1 replica + caps | tsx#2 | **OPEN** |
+| P2 terminal surface | tsx#3 | **OPEN** |
 
-## P3 — YottaDB data plane (**ACTIVE**)
+## P4 — infra / utility-03
 
-| # | Work | Ticket | Status |
-|---|------|--------|--------|
-| P3.1–P3.6 | mesh/poly/infra milestones | — | ✅ |
-| P3.4 | Full author-pass PubMed + MARC | ydb-mesh#4 | ✅ **CLOSED** 2026-10-10 |
-| **P3.7** | **BM25 index rebuild** | **ydb-mesh#12** | **OPEN** |
-| **P3.8** | **M DS libraries ship/docs** | **ydb-mesh#13** | **OPEN** |
-| **P3.9** | **U02 replica decision** | **ydb-infra#11** | **OPEN** |
-| **P3.10** | **Host JDK ticket close-out** | **ydb-infra#1** | **OPEN** (JDK 21+25 done; see comment) |
+| Work | Ticket | Status |
+|------|--------|--------|
+| utility-03 edge (Caddy, jump, git, TUI) | ydb-infra#14–#17 | **OPEN** |
+| Backup / read node / provisioning | ydb-infra#19–#21 | **OPEN** |
+| Move MeshGraph search + MCP to U03 | ydb-infra#22 | **OPEN** |
+| Porkbun DNS + /mcp | ydb-infra#23 | **OPEN** |
 
-## P4 — O'Kane GPL Mumps (benchmark only)
+## Done (historical — do not reopen)
 
-| # | Work | Ticket | Status |
-|---|------|--------|--------|
-| P4.1–P4.3 | B-tree · ISO table · MISS class | okanes-mumps#1–#2 | ✅ |
-| **P4.4** | **Mac binary unlinked (SyncClock)** | **okanes-mumps#3** | **OPEN** |
+- **P ports** Py/C3/JavaM + mJVM native **131/8/0**
+- **ydb-mesh#12** BM25 · **#13** DS libs · **#4** author-pass
+- **JavaM v0.4.0** (Cdb2 mesh, `$ORDER`, fleet smoke) 2026-10-15
+- **Perf review** #97–#102 + BENCH/PERF-REVIEW/BENCH-BACKENDS
+- **Comdb2** U01+U02 cluster READY · **ydb-infra#1** JDK · **rsm#30** coverage
+- **m-semantics#12** path refresh (superseded by this 2026-10-15 pass)
 
-## P5 — fst — **FROZEN**
+## Scope lock
 
-| # | Work | Ticket | Status |
-|---|------|--------|--------|
-| P5.f | Freeze: reference only | fst#10 | **FROZEN** (parked) |
-
-## P6 — tooling / docs
-
-| # | Work | Ticket | Status |
-|---|------|--------|--------|
-| P6.1–P6.2b | m-lsp DO/FOR/@ | m-lsp#1–#3 | ✅ |
-| **P6.3** | **Coverage matrix refresh** (131/8/0 + native) | **rsm#31** | **OPEN** |
-| **P6.4** | **Refresh this path + `~/CRITICAL_PATH.md`** | **m-semantics#12** | **OPEN** |
-
-## P7 — Comdb2 / FreeM
-
-| # | Work | Ticket | Status |
-|---|------|--------|--------|
-| P7.1–P7.5 | Comdb2 U01+U02 cluster | — | ✅ |
-| P8 | FreeM upstream | freem-ops#1 | ✅ closed · WAIT indefinitely #5/#6 |
-
----
-
-## Scope lock (2026-10-10 strategy)
-
-| | Role |
-|--|------|
-| **JvMumps + mJVM** | primary ports |
-| **RSM** | only Oracle |
-| **PyMumps / C3Mumps** | peer-proof **freeze** (corpus/regression only) |
-| **O'Kane / FreeM** | adjuncts, never oracles |
-| **Comdb2** | optional infra |
-| **YottaDB** | storage plane (not an M stack) |
-
-**W3 / DO-GOTO-XECUTE:** `pymumps#3` + `JavaM#24` — confirm freeze; do not expand peer scopes.
-
----
-
-## Issue index (open GitHub 2026-10-11)
-
-| Repo | Open |
-|------|------|
-| `mjandrews1/ydb-mesh` (**MeshGraph**) | **#12** BM25 TRANS2BIG · **#13** M DS libs |
-| `mjandrews1/ydb-infra` | **#1** host JDK (commented 2026-10-11) · **#11** U02 replica |
-| `mjandrews1/jvmumps` | **#24** W3 freeze note |
-| `mjandrews1/pymumps` | **#3** W3 freeze note |
-| `mjandrews1/rsm` | **#31** coverage refresh |
-| `mjandrews1/m-semantics` | **#12** path refresh |
-| `mjandrews1/okanes-mumps` | **#3** Mac binary |
-| `mjandrews1/fst` | **0 open** (#10 closed with freeze) |
-| Others | 0 open |
-
-**Closed recently:** ydb-mesh#4 author-pass · JavaM#6 `$ORDER` hang · JavaM#7–#15 · P0 audits.
-
----
-
-## Next action (do this now)
-
-**NOW:** **ydb-mesh#12** — fix `write_batch` size (50–100 / TP or split TPs), rerun `term_index build` on U01, then `bm25_search` smoke.  
-**Parallel:** **ydb-mesh#13** docs for HMAP/HSTACK/HQUEUE/HHEAP/HPQUE.  
-**Then:** close **ydb-infra#1** · decide **ydb-infra#11** · freeze notes **pymumps#3** / **JavaM#24** · refresh matrix **rsm#31**.
+| Role | |
+|------|--|
+| JavaM + mJVM | primary |
+| RSM | only oracle |
+| Py/C3 | corpus freeze |
+| MeshGraph / tsx | data products (not M oracles) |
+| fst / O'Kane / FreeM | frozen / adjunct |
