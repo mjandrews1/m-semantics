@@ -77,6 +77,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | Portal search UX (top-k + titles) | ydb-mesh#24 | **DONE** PR #35 |
 | Perf + limit probes | ydb-mesh#20 | **DONE** PR #36 |
 | MCP registry | ydb-mesh#28 | **WAIT** submit kit ready (operator publish) |
+| PubMed completeness / MCP v0 smoke | ydb-mesh#25–#27 | **VERIFIED** PR #38 (dangling=0) |
 
 **No MeshGraph cron** — rebuilds were one-shots. Live: `mesh-search.service`, YDB web, dashboard.
 
