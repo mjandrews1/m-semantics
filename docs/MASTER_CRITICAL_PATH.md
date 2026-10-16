@@ -36,7 +36,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
   P0  JavaM PR#127 / #126     Cdb2 LOCK + TSTART          ← merge
   P0b JavaM #122 #123         store audit close-out
   P1  JavaM v0.5.0            perf cycle → tag v0.5.0
-  P2  MeshGraph #28 registry submit · #21 REPL · remaining polish
+  P2  MeshGraph #28 operator registry publish · remaining polish
   P3  tsx#4                   archive cdb2sql PATH (broken cron)
   P4  tsx #2 #3               replica+caps · terminal
   P5  ydb-infra #14–#23       utility-03 edge / backup / DNS
@@ -76,7 +76,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | MeSH edge orientation | ydb-mesh#23 | **DONE** PR #35 |
 | Portal search UX (top-k + titles) | ydb-mesh#24 | **DONE** PR #35 |
 | Perf + limit probes | ydb-mesh#20 | **DONE** PR #36 |
-| MCP registry | ydb-mesh#28 | **IN FLIGHT** manifest ready |
+| MCP registry | ydb-mesh#28 | **WAIT** submit kit ready (operator publish) |
 
 **No MeshGraph cron** — rebuilds were one-shots. Live: `mesh-search.service`, YDB web, dashboard.
 
