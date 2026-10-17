@@ -252,4 +252,58 @@ module MControl {
     PostcondDoTrueCalls(s, target, retPc);
   }
 
+  // ----- postconditional DO in a While loop (F  D:COND  Q:'COND) --------
+  // #:ISO 8.2.2 + 7.2.4: the M while-loop idiom is
+  //   F  D:COND  Q:'COND
+  // which is: argumentless DO if COND, then QUIT if not COND, repeat.
+  // The postconditional guards the DO call each iteration.
+
+  // One iteration: if cond, DO (push frame, jump to target, body, QUIT);
+  // if not cond, skip.  Returns the state after one step.
+  function whileStep(cond: bool, s: CtrlState, target: nat, retPc: nat): CtrlState
+    requires retPc >= s.pc
+  {
+    if cond then
+      // DO: push frame, run body to QUIT, pop frame
+      quitReturn(doCall(s, target, retPc))
+    else
+      s
+  }
+
+  // While: iterate whileStep until cond is false.
+  // We model this as a bounded fold (Dafny requires termination).
+  function whileLoop(cond: bool, s: CtrlState, target: nat, retPc: nat, fuel: nat): CtrlState
+    requires retPc >= s.pc
+    decreases fuel
+  {
+    if fuel == 0 || !cond then s
+    else whileLoop(cond, whileStep(cond, s, target, retPc), target, retPc, fuel - 1)
+  }
+
+  // While with false cond: body is never executed, state is unchanged.
+  lemma WhileFalseIsNoop(s: CtrlState, target: nat, retPc: nat, fuel: nat)
+    requires retPc >= s.pc
+    ensures whileLoop(false, s, target, retPc, fuel) == s
+  { }
+
+  // While with retPc == s.pc (loop head): one iteration is identity on PC/stack.
+  lemma WhileLoopHeadRoundTrip(s: CtrlState, target: nat)
+    requires 0 <= s.pc
+    ensures whileStep(true, s, target, s.pc).pc == s.pc
+    ensures whileStep(true, s, target, s.pc).stack == s.stack
+  { }
+
+  // While loop with cond at loop head: N iterations of identity = identity.
+  lemma WhileLoopHeadIdentity(s: CtrlState, target: nat, fuel: nat)
+    requires 0 <= s.pc
+    ensures whileLoop(true, s, target, s.pc, fuel) == s
+    decreases fuel
+  {
+    if fuel == 0 { } else {
+      assert whileStep(true, s, target, s.pc) == s by {
+        WhileLoopHeadRoundTrip(s, target);
+      }
+    }
+  }
+
 }
