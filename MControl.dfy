@@ -648,4 +648,35 @@ module MControl {
     ensures quitReturn(ifThenPostcondDo(true, true, s, target, retPc)).stack == s.stack
   { }
 
+  // ----- If + postconditional compositions --------------------------------
+  // I IFCOND D:DOCOND TAG composes with other constructs:
+
+  // If + postcondSeq: I COND S:SUBCOND (cmd seq).
+  // If false: skip everything.  If true: postcondSeq(SUBCOND, cmds).
+  lemma IfThenPostcondSeqComposition(ifCond: bool, doCond: bool, cmds: CmdSeq, s: CtrlState)
+    ensures postcondSeq(ifCond && doCond, cmds, s)
+         == (if ifCond then postcondSeq(doCond, cmds, s) else s)
+  { }
+
+  // If + postcondAssign: I COND S:SUBCOND VAR=expr.
+  lemma IfThenPostcondAssignComposition(ifCond: bool, doCond: bool, f: Store -> Store, st: Store)
+    ensures postcondAssign(ifCond && doCond, f, st)
+         == (if ifCond then postcondAssign(doCond, f, st) else st)
+  { }
+
+  // If + doWithSeq: I COND D:SUBCOND TAG (seq body).
+  lemma IfThenDoSeqComposition(ifCond: bool, doCond: bool, cmds: CmdSeq, s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures doWithSeq(ifCond && doCond, cmds, s, target, retPc)
+         == (if ifCond then doWithSeq(doCond, cmds, s, target, retPc) else s)
+  { }
+
+  // Full If composition summary: If(a, D:b) == D:(a && b) for DO.
+  lemma IfPostcondUniversalComposition(ifCond: bool, doCond: bool)
+    ensures forall s: CtrlState, target: nat, retPc: nat
+      :: retPc >= s.pc ==>
+         ifThenPostcondDo(ifCond, doCond, s, target, retPc)
+         == postcondDo(ifCond && doCond, s, target, retPc)
+  { }
+
 }
