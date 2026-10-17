@@ -200,4 +200,37 @@ module MControl {
     quitReturn(s1)
   }
 
+  // ----- postconditional DO (D:COND TAG) ---------------------------------
+  // #:ISO 7.2.4: a postconditional on DO executes the call only if COND.
+  // Composition: If(cond, doCall(...), skip) where skip leaves state unchanged.
+  // This is the IR shape for D:COND TAG — the MFrontend compiles it as
+  // evaluate COND, JMP0 past the CALL_PC if false.
+
+  function skip(s: CtrlState): CtrlState { s }
+
+  function postcondDo(cond: bool, s: CtrlState, target: nat, retPc: nat): CtrlState
+    requires retPc >= s.pc
+  {
+    if cond then doCall(s, target, retPc) else skip(s)
+  }
+
+  // Postconditional DO: false condition leaves state unchanged.
+  lemma PostcondDoFalseLeavesState(s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures postcondDo(false, s, target, retPc) == s
+  { }
+
+  // Postconditional DO: true condition performs the call.
+  lemma PostcondDoTrueCalls(s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures postcondDo(true, s, target, retPc) == doCall(s, target, retPc)
+  { }
+
+  // Postconditional DO round-trip: true cond + QUIT restores PC and stack.
+  lemma PostcondDoQuitRoundTrip(s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures quitReturn(postcondDo(true, s, target, retPc)).pc == retPc
+    ensures quitReturn(postcondDo(true, s, target, retPc)).stack == s.stack
+  { }
+
 }
