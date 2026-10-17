@@ -25,3 +25,6 @@ jobs:
 
       - name: Verify MPattern
         run: dafny verify MPattern.dfy
+
+      - name: Verify MControl
+        run: dafny verify MControl.dfy
