@@ -336,6 +336,34 @@ module MControl {
     ensures whileStep(true, s, target, retPc).stack == s.stack
   { }
 
+  // ----- While + postconditional compositions -----------------------------
+  // F  D:COND  Q:'COND composes with other constructs:
+
+  // While + postcondSeq: F  S:COND (cmd seq)  Q:'COND.
+  // Each iteration: if cond, run seq; else skip.
+  lemma WhilePostcondSeqComposition(cond: bool, cmds: CmdSeq, s: CtrlState)
+    ensures postcondSeq(cond, cmds, s) == (if cond then runSeq(cmds, s) else s)
+  { }
+
+  // While + postcondAssign: F  S:COND VAR=expr  Q:'COND.
+  lemma WhilePostcondAssignComposition(cond: bool, f: Store -> Store, st: Store)
+    ensures postcondAssign(cond, f, st) == (if cond then f(st) else st)
+  { }
+
+  // While + doWithSeq: F  D:COND TAG (seq body)  Q:'COND.
+  lemma WhileDoSeqComposition(cond: bool, cmds: CmdSeq, s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures doWithSeq(cond, cmds, s, target, retPc) == (if cond then quitReturn(doCall(s, target, retPc)) else s)
+  { }
+
+  // While universal composition: whileStep(cond) == if cond then call else skip.
+  lemma WhilePostcondUniversal(cond: bool)
+    ensures forall s: CtrlState, target: nat, retPc: nat
+      :: retPc >= s.pc ==>
+         whileStep(cond, s, target, retPc)
+         == (if cond then quitReturn(doCall(s, target, retPc)) else s)
+  { }
+
   // ----- postconditional assignment (S:COND VAR=expr) -------------------
   // #:ISO 7.2.4 + 8.1.2: a postconditional on SET executes the assignment
   // only if COND.  The store update is guarded.
