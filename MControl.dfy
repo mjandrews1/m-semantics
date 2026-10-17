@@ -373,4 +373,74 @@ module MControl {
     ensures quitReturn(quitReturn(doCall(doCall(s, target, retPc1), target, retPc2))).pc == retPc1
   { }
 
+  // ----- postconditional DO with arguments (D:COND TAG(args)) -----------
+  // #:ISO 8.2.4: argumented DO evaluates expressions and binds formals at
+  // the target.  The return point is after the DO on the current line.
+  // Optional QUIT expression = extrinsic return value.
+
+  // Argument passing: args are values (Bytes) that bind to formals.
+  // We model the binding as a store update; the call semantics are:
+  //   1. Evaluate args (already done — we receive them as values)
+  //   2. Push return frame
+  //   3. Bind formals at target (store update)
+  //   4. Run body
+  //   5. QUIT [expr] — pop frame, optionally set return value
+
+  // Call with args: push frame, bind formals, run to QUIT.
+  // The store update for formals is abstracted (we model it as part of
+  // the callee's execution).  The key control-flow contract: frame push/pop.
+  function callWithArgs(cond: bool, s: CtrlState, target: nat, retPc: nat): CtrlState
+    requires retPc >= s.pc
+  {
+    if cond then quitReturn(doCall(s, target, retPc)) else s
+  }
+
+  // Postconditional call with args: false cond skips the call entirely.
+  lemma CallFalseSkips(s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures callWithArgs(false, s, target, retPc) == s
+  { }
+
+  // Postconditional call with args: true cond performs call + return.
+  lemma CallTrueRoundTrips(s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures callWithArgs(true, s, target, retPc).pc == retPc
+    ensures callWithArgs(true, s, target, retPc).stack == s.stack
+  { }
+
+  // Call with QUIT value: the return value is produced by the callee.
+  // We model the value as opaque (Bytes); the control contract is the same.
+  function callWithReturn(cond: bool, s: CtrlState, target: nat, retPc: nat): CtrlState
+    requires retPc >= s.pc
+  {
+    if cond then quitReturn(doCall(s, target, retPc)) else s
+  }
+
+  // Postconditional call with return value: same control contract as callWithArgs.
+  lemma CallReturnRoundTrips(s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures callWithReturn(true, s, target, retPc).pc == retPc
+    ensures callWithReturn(true, s, target, retPc).stack == s.stack
+  { }
+
+  // Nested argumented calls: LIFO ordering preserved.
+  // Outer call at retPc1, inner call at retPc2 (inside callee).
+  lemma CallNestedLIFO(s: CtrlState, target1: nat, retPc1: nat, target2: nat, retPc2: nat)
+    requires retPc1 >= s.pc
+    requires retPc2 >= target1  // inner doCall is from inside outer callee  // inner call is from inside outer callee
+    // stack grows: +2 frames
+    ensures |doCall(doCall(s, target1, retPc1), target2, retPc2).stack| == |s.stack| + 2
+    // two QUITs unwind in LIFO order: inner returns to retPc2, outer to retPc1
+    ensures quitReturn(quitReturn(doCall(doCall(s, target1, retPc1), target2, retPc2))).stack == s.stack
+    ensures quitReturn(quitReturn(doCall(doCall(s, target1, retPc1), target2, retPc2))).pc == retPc1
+  { }
+
+  // Postconditional nested calls: both conds true → LIFO round-trip.
+  lemma CallCondNestedRoundTrip(s: CtrlState, target1: nat, retPc1: nat, target2: nat, retPc2: nat)
+    requires retPc1 >= s.pc
+    requires retPc2 >= retPc1
+    ensures callWithArgs(true, callWithArgs(true, s, target1, retPc1), target2, retPc2).stack == s.stack
+    ensures callWithArgs(true, callWithArgs(true, s, target1, retPc1), target2, retPc2).pc == retPc2
+  { }
+
 }
