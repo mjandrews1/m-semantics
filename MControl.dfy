@@ -443,4 +443,54 @@ module MControl {
     ensures callWithArgs(true, callWithArgs(true, s, target1, retPc1), target2, retPc2).pc == retPc2
   { }
 
+  // ----- postconditional DO inside IF (I IFCOND D:DOCOND TAG) ----------
+  // #:ISO 7.2.4 + 8.2.4: nested conditionals — the IF guards the DO, and
+  // the DO has its own postconditional.  The DO executes only if BOTH
+  // IFCOND and DOCOND are true.  This is the composition:
+  //   If(IFCOND, postcondDo(DOCOND, ...), skip)
+
+  // Double-conditional DO: both conditions must hold.
+  function ifThenPostcondDo(ifCond: bool, doCond: bool, s: CtrlState, target: nat, retPc: nat): CtrlState
+    requires retPc >= s.pc
+  {
+    if ifCond then postcondDo(doCond, s, target, retPc) else s
+  }
+
+  // Both false: no call, state unchanged.
+  lemma IfBothFalseIsNoop(s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures ifThenPostcondDo(false, false, s, target, retPc) == s
+  { }
+
+  // IF true, DO false: DO skipped (postcondDo(false) == s).
+  lemma IfTrueDoFalseSkips(s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures ifThenPostcondDo(true, false, s, target, retPc) == s
+  { }
+
+  // IF false, DO true: IF skips the entire statement.
+  lemma IfFalseDoTrueSkips(s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures ifThenPostcondDo(false, true, s, target, retPc) == s
+  { }
+
+  // Both true: DO executes (postcondDo(true) == doCall).
+  lemma IfBothTrueCalls(s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures ifThenPostcondDo(true, true, s, target, retPc) == doCall(s, target, retPc)
+  { }
+
+  // Composition law: If(IFCOND, D:DOCOND) is equivalent to D:(IFCOND && DOCOND).
+  lemma IfThenPostcondEqualsConjunction(ifCond: bool, doCond: bool, s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures ifThenPostcondDo(ifCond, doCond, s, target, retPc) == postcondDo(ifCond && doCond, s, target, retPc)
+  { }
+
+  // Both true + QUIT: round-trip restores PC and stack.
+  lemma IfBothTrueQuitRoundTrip(s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures quitReturn(ifThenPostcondDo(true, true, s, target, retPc)).pc == retPc
+    ensures quitReturn(ifThenPostcondDo(true, true, s, target, retPc)).stack == s.stack
+  { }
+
 }
