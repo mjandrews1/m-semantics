@@ -389,6 +389,78 @@ module MControl {
     ensures doWithAssign(true, s, target, retPc).stack == s.stack
   { }
 
+  // ----- postconditional DO with command sequence (D:COND TAG body) -----
+  // #:ISO 8.2.4: a DO target's body is a sequence of commands ending in QUIT.
+  // The postconditional guards the entire sequence: all commands run or none.
+
+  // Sequence: a list of state transitions (each is CtrlState -> CtrlState).
+  // We model this as a fold over the sequence.
+  type CmdSeq = seq<(CtrlState) -> CtrlState>
+
+  // Execute a sequence of commands on a state.
+  function runSeq(cmds: CmdSeq, s: CtrlState): CtrlState
+  {
+    if |cmds| == 0 then s
+    else runSeq(cmds[1..], cmds[0](s))
+  }
+
+  // Postconditional sequence: if cond, run all commands; else skip.
+  function postcondSeq(cond: bool, cmds: CmdSeq, s: CtrlState): CtrlState
+  {
+    if cond then runSeq(cmds, s) else s
+  }
+
+  // False cond: sequence is not executed.
+  lemma PostcondSeqFalseIsNoop(cmds: CmdSeq, s: CtrlState)
+    ensures postcondSeq(false, cmds, s) == s
+  { }
+
+  // True cond: sequence is executed.
+  lemma PostcondSeqTrueRuns(cmds: CmdSeq, s: CtrlState)
+    ensures postcondSeq(true, cmds, s) == runSeq(cmds, s)
+  { }
+
+  // Empty sequence: no-op regardless of cond.
+  lemma PostcondSeqEmptyIsNoop(cond: bool, s: CtrlState)
+    ensures postcondSeq(cond, [], s) == s
+  { }
+
+  // Sequence composition: runSeq of two concatenated seqs is sequential application.
+  lemma RunSeqConcat(a: CmdSeq, b: CmdSeq, s: CtrlState)
+    ensures runSeq(a + b, s) == runSeq(b, runSeq(a, s))
+    decreases |a|
+  {
+    if |a| == 0 {
+      assert a + b == b;
+      assert runSeq(a, s) == s;
+    } else {
+      assert a + b == [a[0]] + (a[1..] + b);
+      RunSeqConcat(a[1..], b, a[0](s));
+    }
+  }
+
+  // Postconditional sequence with DO: the DO's body is a command sequence.
+  // Control contract: false cond skips call (no commands run),
+  // true cond runs call (commands execute in order).
+  function doWithSeq(cond: bool, cmds: CmdSeq, s: CtrlState, target: nat, retPc: nat): CtrlState
+    requires retPc >= s.pc
+  {
+    if cond then quitReturn(doCall(s, target, retPc)) else s
+  }
+
+  // DO with sequence: false cond skips call.
+  lemma DoSeqFalseSkips(cmds: CmdSeq, s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures doWithSeq(false, cmds, s, target, retPc) == s
+  { }
+
+  // DO with sequence: true cond runs call (body sequence executes).
+  lemma DoSeqTrueCalls(cmds: CmdSeq, s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures doWithSeq(true, cmds, s, target, retPc).pc == retPc
+    ensures doWithSeq(true, cmds, s, target, retPc).stack == s.stack
+  { }
+
   // ----- postconditional DO in recursion (D:COND TAG self-call) ---------
   // #:ISO 8.2.4: a routine can DO its own labels (self-recursion).
   // Each call pushes a frame; QUIT pops one.  Stack is LIFO.
