@@ -306,4 +306,71 @@ module MControl {
     }
   }
 
+  // ----- postconditional DO in recursion (D:COND TAG self-call) ---------
+  // #:ISO 8.2.4: a routine can DO its own labels (self-recursion).
+  // Each call pushes a frame; QUIT pops one.  Stack is LIFO.
+  // The postconditional guards the recursive call each depth.
+
+  // One recursive step: if cond, push frame and jump to target (same routine).
+  // The callee's QUIT pops the frame and returns to retPc.
+  function recStep(cond: bool, s: CtrlState, target: nat, retPc: nat): (r: CtrlState)
+    requires retPc >= s.pc
+    ensures retPc >= r.pc  // after step, retPc is still valid as a return point
+  {
+    if cond then quitReturn(doCall(s, target, retPc)) else s
+  }
+
+  // Recursive depth: apply recStep N times (simulating N levels of recursion).
+  function recDepth(cond: bool, s: CtrlState, target: nat, retPc: nat, depth: nat): CtrlState
+    requires retPc >= s.pc
+    decreases depth
+  {
+    if depth == 0 then s
+    else recStep(cond, recDepth(cond, s, target, retPc, depth - 1), target, retPc)
+  }
+
+  // Recursion with false cond: no call, state unchanged.
+  lemma RecFalseIsNoop(s: CtrlState, target: nat, retPc: nat, depth: nat)
+    requires retPc >= s.pc
+    ensures recDepth(false, s, target, retPc, depth) == s
+  { }
+
+  // Recursion at loop head (retPc == s.pc): each level is identity on PC/stack.
+  lemma RecHeadRoundTrip(s: CtrlState, target: nat)
+    requires 0 <= s.pc
+    ensures recStep(true, s, target, s.pc).pc == s.pc
+    ensures recStep(true, s, target, s.pc).stack == s.stack
+  { }
+
+  // Deep recursion at loop head: N levels = identity (by induction).
+  lemma RecHeadIdentity(s: CtrlState, target: nat, depth: nat)
+    requires 0 <= s.pc
+    ensures recDepth(true, s, target, s.pc, depth) == s
+    decreases depth
+  {
+    if depth == 0 { } else {
+      assert recStep(true, s, target, s.pc) == s by {
+        RecHeadRoundTrip(s, target);
+      }
+    }
+  }
+
+  // Recursion grows stack when retPc != s.pc (normal recursive call).
+  // Each level pushes a frame; full unwind pops them all.
+  lemma RecStackGrowsAndUnwinds(s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures |doCall(s, target, retPc).stack| == |s.stack| + 1
+    ensures quitReturn(doCall(s, target, retPc)).stack == s.stack
+    ensures quitReturn(doCall(s, target, retPc)).pc == retPc
+  { }
+
+  // Nested recursion: two levels push two frames, two QUITs pop both.
+  lemma RecNestedTwoLevels(s: CtrlState, target: nat, retPc1: nat, retPc2: nat)
+    requires retPc1 >= s.pc
+    requires retPc2 >= target  // second call is from inside the callee (retPc2 after target)
+    ensures |doCall(doCall(s, target, retPc1), target, retPc2).stack| == |s.stack| + 2
+    ensures quitReturn(quitReturn(doCall(doCall(s, target, retPc1), target, retPc2))).stack == s.stack
+    ensures quitReturn(quitReturn(doCall(doCall(s, target, retPc1), target, retPc2))).pc == retPc1
+  { }
+
 }
