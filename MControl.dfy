@@ -233,4 +233,23 @@ module MControl {
     ensures quitReturn(postcondDo(true, s, target, retPc)).stack == s.stack
   { }
 
+  // ----- integration: postcondDo ≡ Stmt.If model --------------------------
+  // MSemantics.Stmt models IF/ELSE as If(test, thn, els) with run() producing
+  // output.  postcondDo is the control-state analog: If(cond, doCall, skip).
+  // This lemma ties the two models together: the control-state transition of
+  // a postconditional DO is exactly the Stmt.If dispatch.
+
+  lemma PostcondDoMatchesIfModel(s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    // false cond: state unchanged (skip arm)
+    ensures postcondDo(false, s, target, retPc) == s
+    // true cond: state is doCall (call arm)
+    ensures postcondDo(true, s, target, retPc).pc == target
+    ensures postcondDo(true, s, target, retPc).stack == s.stack + [Frame(retPc, s.line)]
+    // this is exactly what MSemantics.run(If(cond, ...)) dispatches to
+  {
+    PostcondDoFalseLeavesState(s, target, retPc);
+    PostcondDoTrueCalls(s, target, retPc);
+  }
+
 }
