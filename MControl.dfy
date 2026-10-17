@@ -260,11 +260,11 @@ module MControl {
 
   // One iteration: if cond, DO (push frame, jump to target, body, QUIT);
   // if not cond, skip.  Returns the state after one step.
+  // Equivalent to quitReturn(postcondDo(cond, s, target, retPc)).
   function whileStep(cond: bool, s: CtrlState, target: nat, retPc: nat): CtrlState
     requires retPc >= s.pc
   {
     if cond then
-      // DO: push frame, run body to QUIT, pop frame
       quitReturn(doCall(s, target, retPc))
     else
       s
@@ -305,6 +305,36 @@ module MControl {
       }
     }
   }
+
+  // While step uses postcondDo: when cond=true, whileStep == quitReturn(postcondDo(true)).
+  // When cond=false, whileStep returns s (not quitReturn(s) which would pop a frame).
+  lemma WhileStepUsesPostcondDo(cond: bool, s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures whileStep(true, s, target, retPc) == quitReturn(postcondDo(true, s, target, retPc))
+    ensures whileStep(false, s, target, retPc) == s
+  { }
+
+  // While with true cond: one step performs call + QUIT (round-trip).
+  lemma WhileTrueCallsAndQuits(s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures whileStep(true, s, target, retPc).pc == retPc
+    ensures whileStep(true, s, target, retPc).stack == s.stack
+  { }
+
+  // While QUIT round-trip: true cond at loop head + QUIT restores state.
+  lemma WhileQuitRoundTrip(s: CtrlState, target: nat)
+    requires 0 <= s.pc
+    ensures whileStep(true, s, target, s.pc).pc == s.pc
+    ensures whileStep(true, s, target, s.pc).stack == s.stack
+  { }
+
+  // While + postcondDo composition summary.
+  lemma WhilePostcondComposition(cond: bool, s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures whileStep(false, s, target, retPc) == s
+    ensures whileStep(true, s, target, retPc).pc == retPc
+    ensures whileStep(true, s, target, retPc).stack == s.stack
+  { }
 
   // ----- postconditional DO in recursion (D:COND TAG self-call) ---------
   // #:ISO 8.2.4: a routine can DO its own labels (self-recursion).
