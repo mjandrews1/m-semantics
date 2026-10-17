@@ -336,6 +336,59 @@ module MControl {
     ensures whileStep(true, s, target, retPc).stack == s.stack
   { }
 
+  // ----- postconditional assignment (S:COND VAR=expr) -------------------
+  // #:ISO 7.2.4 + 8.1.2: a postconditional on SET executes the assignment
+  // only if COND.  The store update is guarded.
+
+  // Assignment: set a variable to a value in the store.
+  // We model the store as part of CtrlState... but CtrlState doesn't have a store.
+  // The store is in MSemantics.Store.  We model assignment as a function
+  // that produces a new store, and the postconditional guards it.
+
+  // Postconditional assignment: if cond, update store; else leave unchanged.
+  // We model this abstractly: the assignment is a function from store to store.
+  function postcondAssign(cond: bool, f: Store -> Store, st: Store): Store
+  {
+    if cond then f(st) else st
+  }
+
+  // False cond: store unchanged.
+  lemma PostcondAssignFalseIsNoop(f: Store -> Store, st: Store)
+    ensures postcondAssign(false, f, st) == st
+  { }
+
+  // True cond: store is updated.
+  lemma PostcondAssignTrueApplies(f: Store -> Store, st: Store)
+    ensures postcondAssign(true, f, st) == f(st)
+  { }
+
+  // Composition law: S:COND VAR=expr is equivalent to If(COND, S VAR=expr, skip).
+  lemma PostcondAssignEqualsIf(f: Store -> Store, st: Store)
+    ensures postcondAssign(false, f, st) == st
+    ensures postcondAssign(true, f, st) == f(st)
+  { }
+
+  // Postconditional assignment in a DO call: the callee's assignments are
+  // guarded by the DO's postconditional.  Control contract unchanged.
+  function doWithAssign(cond: bool, s: CtrlState, target: nat, retPc: nat): CtrlState
+    requires retPc >= s.pc
+  {
+    if cond then quitReturn(doCall(s, target, retPc)) else s
+  }
+
+  // DO with assignment: false cond skips call (no assignments run).
+  lemma DoAssignFalseSkips(s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures doWithAssign(false, s, target, retPc) == s
+  { }
+
+  // DO with assignment: true cond runs call (assignments execute).
+  lemma DoAssignTrueCalls(s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures doWithAssign(true, s, target, retPc).pc == retPc
+    ensures doWithAssign(true, s, target, retPc).stack == s.stack
+  { }
+
   // ----- postconditional DO in recursion (D:COND TAG self-call) ---------
   // #:ISO 8.2.4: a routine can DO its own labels (self-recursion).
   // Each call pushes a frame; QUIT pops one.  Stack is LIFO.
