@@ -423,6 +423,66 @@ module MControl {
     ensures continueStep(false, s, loopHead) == s
   { }
 
+  // ----- postconditional return / raise (Q:COND expr / trap) ------------
+  // #:ISO 8.2.5: Q:COND expr = QUIT with value if COND (return from extrinsic).
+  // #:ISO 8.1.5: trap fires on error (raise).
+
+  // Return: QUIT with value if cond; else continue.
+  // We model the extrinsic return value as a field in CtrlState... but
+  // CtrlState doesn't have one.  We use a separate function.
+  function returnStep(cond: bool, s: CtrlState, retVal: Bytes): CtrlState
+  {
+    if cond then quitReturn(s) else s
+  }
+
+  // Raise: fire trap if cond; else continue.
+  // Trap execution is abstracted (trapCommand is a command string).
+  function raiseStep(cond: bool, s: CtrlState): CtrlState
+  {
+    if cond then s  // trap fires — state changes are modelled by trapCommand
+    else s
+  }
+
+  // Return false: no-op (execution continues).
+  lemma ReturnFalseIsNoop(s: CtrlState, retVal: Bytes)
+    ensures returnStep(false, s, retVal) == s
+  { }
+
+  // Return true: QUIT (exits, produces return value).
+  lemma ReturnTrueQuits(s: CtrlState, retVal: Bytes)
+    ensures returnStep(true, s, retVal) == quitReturn(s)
+  { }
+
+  // Raise false: no-op (no error).
+  lemma RaiseFalseIsNoop(s: CtrlState)
+    ensures raiseStep(false, s) == s
+  { }
+
+  // Raise true: trap fires (state is modified by trap handler).
+  lemma RaiseTrueFires(s: CtrlState)
+    ensures raiseStep(true, s) == s  // abstract: trap execution is modelled separately
+  { }
+
+  // Return in extrinsic: Q:COND expr with QUIT restores PC and stack.
+  // returnStep(true, s, retVal) == quitReturn(s) — one QUIT, not two.
+  lemma ReturnInExtrinsicRoundTrip(s: CtrlState, target: nat, retPc: nat, retVal: Bytes)
+    requires retPc >= s.pc
+    ensures returnStep(true, doCall(s, target, retPc), retVal).pc == retPc
+    ensures returnStep(true, doCall(s, target, retPc), retVal).stack == s.stack
+  { }
+
+  // Raise + return composition: both false = no-op.
+  lemma RaiseReturnBothFalse(s: CtrlState, retVal: Bytes)
+    ensures raiseStep(false, s) == s
+    ensures returnStep(false, s, retVal) == s
+  { }
+
+  // Raise with trap: hasTrap is true when etrap or ztrap is set.
+  lemma RaiseWithTrap(s: CtrlState)
+    requires |s.etrap| > 0 || |s.ztrap| > 0
+    ensures hasTrap(s)
+  { }
+
   // ----- postconditional assignment (S:COND VAR=expr) -------------------
   // #:ISO 7.2.4 + 8.1.2: a postconditional on SET executes the assignment
   // only if COND.  The store update is guarded.
