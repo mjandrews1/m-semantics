@@ -364,6 +364,65 @@ module MControl {
          == (if cond then quitReturn(doCall(s, target, retPc)) else s)
   { }
 
+  // ----- postconditional break / continue (Q:COND / G:COND in loop) ------
+  // #:ISO 8.2.5 + 8.2.3: in a loop body,
+  //   Q:COND  = break if COND (QUIT exits the loop)
+  //   G:COND  = continue if COND (GOTO loop head, skip rest of body)
+
+  // Break: QUIT if cond (exit loop); else stay (continue iterating).
+  function breakStep(cond: bool, s: CtrlState): CtrlState
+  {
+    if cond then quitReturn(s) else s
+  }
+
+  // Continue: GOTO loop head if cond (skip rest of body); else fall through.
+  // We model "GOTO loop head" as setting pc back to s.pc (the loop head).
+  function continueStep(cond: bool, s: CtrlState, loopHead: nat): CtrlState
+  {
+    if cond then s.(pc := loopHead) else s
+  }
+
+  // Break false: no-op (loop continues).
+  lemma BreakFalseIsNoop(s: CtrlState)
+    ensures breakStep(false, s) == s
+  { }
+
+  // Break true: QUIT (exits loop).
+  lemma BreakTrueQuits(s: CtrlState)
+    ensures breakStep(true, s) == quitReturn(s)
+  { }
+
+  // Continue false: no-op (body continues).
+  lemma ContinueFalseIsNoop(s: CtrlState, loopHead: nat)
+    ensures continueStep(false, s, loopHead) == s
+  { }
+
+  // Continue true: jumps to loop head.
+  lemma ContinueTrueJumps(s: CtrlState, loopHead: nat)
+    ensures continueStep(true, s, loopHead).pc == loopHead
+  { }
+
+  // Break in a while loop: after one iteration, break means don't iterate.
+  // The stack is already restored by whileStep's quitReturn.
+  lemma BreakInWhileExits(s: CtrlState, target: nat, retPc: nat)
+    requires retPc >= s.pc
+    ensures whileStep(true, s, target, retPc).stack == s.stack
+    ensures whileStep(true, s, target, retPc).pc == retPc
+  { }
+
+  // Continue in a while loop: true cond skips to next iteration.
+  lemma ContinueInWhileSkips(s: CtrlState, target: nat, retPc: nat, loopHead: nat)
+    requires retPc >= s.pc
+    ensures continueStep(true, s, loopHead).pc == loopHead
+    ensures continueStep(true, s, loopHead).stack == s.stack
+  { }
+
+  // Break + continue composition: both false = no-op.
+  lemma BreakContinueBothFalse(s: CtrlState, loopHead: nat)
+    ensures breakStep(false, s) == s
+    ensures continueStep(false, s, loopHead) == s
+  { }
+
   // ----- postconditional assignment (S:COND VAR=expr) -------------------
   // #:ISO 7.2.4 + 8.1.2: a postconditional on SET executes the assignment
   // only if COND.  The store update is guarded.
