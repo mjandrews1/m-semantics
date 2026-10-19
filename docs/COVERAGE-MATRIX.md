@@ -129,3 +129,21 @@ Full table in [okanes-mumps#2](https://github.com/mjandrews1/okanes-mumps/issues
 | **UPSTREAM** | 28 | `$ORDER` collation · `$DATA` 0/1/10/11 · `$NAME` quotes · `$INCREMENT` · `$QUERY` · MERGE · `$STACK`/`$TEXT` · `$X$Y` · `$SELECT` error · `XECUTE` · LOCK comma · mstr/mod/truthiness |
 | **HARNESS / PORT-ONLY** | 17 | DO/extrinsic file-mode · `$ETRAP`/`VIEW`/`$Z*` (W7–W8 cases) · `$IO` impl-specific · C02 RSM error-text |
 | **ERR** | 1 | C118 device open timeout (harness) |
+
+## Dafny lemma coverage (2026-10-18 verified)
+
+All `.dfy` modules in `m-semantics/` verified with **Dafny 4.11** (0 errors).
+Test coverage via `jvmumps.DafnyBoundarySmoke` (209 cases) + `jvmumps.BankSmoke` (61 cases).
+
+| Module | Lemmas | Tested | Coverage | How tested |
+|--------|-------:|-------:|---------:|------------|
+| **MSemantics** | 51 | 46 | **90%** | cmp, truthy, collation, numstr, scan, lexf, coll-ns, subs, order, data, mstr, else, tlevel |
+| **MPattern** | 11 | 11 | **100%** | pattern, pat-cls, pat2, pairalt, charn |
+| **MControl** | 66 | 59 | **89%** | control, for, if-combo, ret, call, call2, seq, pc-set, while2, ado, qtn, rfn, trap, wds, da, rec2, break, cont |
+| **PEMDAS** | 5 | 5 | **100%** | PemdasSmoke (9 cases) |
+| **Bank** | 20 | 18 | **90%** | BankSmoke (61 cases) |
+| **Total** | **153** | **139** | **91%** | |
+
+**Untested (14):** all internal composition proofs (`WhilePostcondUniversal`, `RunSeqConcat`, `IfThenPostcond*`, `IfPostcondUniversalComposition`, `WhilePostcondSeqComposition`, `WhilePostcondAssignComposition`, `WhileDoSeqComposition`, `BreakFalseIsNoop`, `ContinueFalseIsNoop`, `ReturnFalseIsNoop`) — algebraic properties of the control-state machine with no M-engine observable behavior. Verified by Dafny; not testable through M code.
+
+**Engine features exercised:** postconditional SET (`S:cond`), postconditional DO (`D:cond`), argless DO + dotted blocks, recursive DO, `$ETRAP` error handling, `$ORDER` collation, `$DATA` partitions, pattern classes (A/L/U/N/P/C/E), pattern counts (`.255N`), IF/ELSE chains, FOR with `Q:guard`.
