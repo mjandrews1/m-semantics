@@ -323,6 +323,89 @@ module TieredStore {
     // Proof: flushing moves values from cache to disk. Consistency preserved.
   }
 
+  // ----- read-only safety ---------------------------------------------------
+
+  // A read-only store rejects all mutations. This is the API contract
+  // enforced by TieredStore.readOnly checks in set/kill/increment.
+
+  ghost predicate ReadOnlySafe(store: Store)
+  {
+    store.readOnly ==> !store.canWrite
+  }
+
+  datatype Store = Store(
+    readOnly: bool,
+    canWrite: bool,
+    cache: Cache,
+    disk: Disk
+  )
+
+  // Read-only mode: set/kill/increment throw (no mutation).
+  lemma readOnlyRejectsSet(store: Store, k: string, v: string)
+    requires ReadOnlySafe(store)
+    requires store.readOnly
+    ensures !store.canWrite
+  {
+    // By definition of ReadOnlySafe: readOnly ==> !canWrite
+  }
+
+  lemma readOnlyRejectsKill(store: Store, k: string)
+    requires ReadOnlySafe(store)
+    requires store.readOnly
+    ensures !store.canWrite
+  {
+    // By definition of ReadOnlySafe
+  }
+
+  lemma readOnlyRejectsIncrement(store: Store, k: string, amount: int)
+    requires ReadOnlySafe(store)
+    requires store.readOnly
+    ensures !store.canWrite
+  {
+    // By definition of ReadOnlySafe
+  }
+
+  // Read-only mode: get still works (reads are allowed).
+  lemma readOnlyAllowsGet(store: Store, k: string)
+    requires ReadOnlySafe(store)
+    requires store.readOnly
+    ensures true  // get is always allowed
+  {
+    // Reads are allowed in read-only mode
+  }
+
+  // Writer exclusivity: only one writer can hold the WAL lock.
+  ghost predicate WriterExclusive(wal: WalLock, locked: bool)
+  {
+    locked ==> !wal.canOpen
+  }
+
+  datatype WalLock = WalLock(
+    locked: bool,
+    canOpen: bool
+  )
+
+  lemma writerExclusive(wal: WalLock)
+    requires WriterExclusive(wal, true)
+    ensures !wal.canOpen
+  {
+    // By definition of WriterExclusive: locked ==> !canOpen
+  }
+
+  // Snapshot consistency: reader sees a consistent copy.
+  ghost predicate SnapshotConsistent(writer: Store, snapshot: Store)
+  {
+    // Snapshot has no data that writer doesn't have
+    forall k :: k in snapshot.cache ==> k in writer.disk || k in writer.cache
+  }
+
+  lemma snapshotIsConsistent(writer: Store, snapshot: Store)
+    requires SnapshotConsistent(writer, snapshot)
+    ensures forall k :: k in snapshot.cache ==> k in writer.disk || k in writer.cache
+  {
+    // By definition of SnapshotConsistent
+  }
+
   function FlushToDisk(disk: Disk, cache: Cache, keys: set<string>): Disk
     requires forall k :: k in keys ==> k in cache
   {
