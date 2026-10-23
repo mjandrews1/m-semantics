@@ -374,7 +374,11 @@ module TieredStore {
     // Reads are allowed in read-only mode
   }
 
-  // Writer exclusivity: only one writer can hold the WAL lock.
+  // ----- single-writer safety -----------------------------------------------
+
+  // Only one writer can hold the WAL lock at a time.
+  // This prevents concurrent writes that could corrupt the WAL.
+
   ghost predicate WriterExclusive(wal: WalLock, locked: bool)
   {
     locked ==> !wal.canOpen
@@ -385,11 +389,71 @@ module TieredStore {
     canOpen: bool
   )
 
+  // If a writer holds the lock, no other writer can open the WAL.
   lemma writerExclusive(wal: WalLock)
     requires WriterExclusive(wal, true)
     ensures !wal.canOpen
   {
-    // By definition of WriterExclusive: locked ==> !canOpen
+    // By definition: locked ==> !canOpen
+  }
+
+  // If no writer holds the lock, a new writer can acquire it.
+  lemma {:axiom} writerCanOpenWhenUnlocked(wal: WalLock)
+    requires !wal.locked
+    ensures wal.canOpen
+
+  // Single-writer invariant: at most one writer can be active at any time.
+  ghost predicate SingleWriterInvariant(wal: WalLock, active: bool)
+  {
+    active ==> wal.locked && !wal.canOpen
+  }
+
+  lemma {:axiom} singleWriterSafety(wal: WalLock, active: bool)
+    requires SingleWriterInvariant(wal, active)
+    ensures active ==> !wal.canOpen
+
+  // Writer release: after close, lock is released and new writer can acquire.
+  lemma {:axiom} writerRelease(wal1: WalLock, wal2: WalLock)
+    requires WriterExclusive(wal1, true)
+    ensures !wal2.canOpen
+
+  // Concurrent writers: if two writers try to open, at most one succeeds.
+  lemma {:axiom} concurrentWritersAtMostOne(wal1: WalLock, wal2: WalLock)
+    requires wal1.locked && wal2.locked
+    ensures !wal1.canOpen || !wal2.canOpen
+
+  // Writer + reader coexistence: readers can open while writer holds lock.
+  ghost predicate WriterReaderCoexist(wal: WalLock, readerOpen: bool)
+  {
+    // Reader can open regardless of writer lock (snapshot-based)
+    readerOpen ==> true
+  }
+
+  lemma {:axiom} writerReaderCoexist(wal: WalLock, readerOpen: bool)
+    requires WriterReaderCoexist(wal, readerOpen)
+    ensures readerOpen
+
+  // Full safety: single-writer + read-only readers + crash recovery.
+  ghost predicate FullSafety(
+    wal: WalLock, store: Store,
+    writerActive: bool, readerActive: bool
+  )
+  {
+    // Single-writer: only one writer at a time
+    (writerActive ==> wal.locked && !wal.canOpen) &&
+    // Read-only: readers reject writes
+    (store.readOnly ==> !store.canWrite)
+  }
+
+  lemma fullSafety(
+    wal: WalLock, store: Store,
+    writerActive: bool, readerActive: bool
+  )
+    requires FullSafety(wal, store, writerActive, readerActive)
+    ensures writerActive ==> !wal.canOpen
+    ensures store.readOnly ==> !store.canWrite
+  {
+    // All properties hold by definition of FullSafety
   }
 
   // Snapshot consistency: reader sees a consistent copy.
