@@ -1524,7 +1524,7 @@ module MSemantics {
   // $FIND returns 0 when substring is not present.
   lemma FindAbsentIsZero(s: Bytes, sub: Bytes)
     requires |sub| > 0
-    requires |s| < |sub| || (forall i :: 0 <= i <= |s| - |sub| ==> s[i..i + |sub|] != sub)
+    requires |s| < |sub| || (forall i {:trigger s[i..i + |sub|]} :: 0 <= i <= |s| - |sub| ==> s[i..i + |sub|] != sub)
     ensures findAfter(s, sub, 0) == 0 || findAfter(s, sub, 0) > 0
   { }
 
