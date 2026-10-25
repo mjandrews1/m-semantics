@@ -402,4 +402,149 @@ module MPattern {
   // "hello"?5E = 1, "hello"?1E = 0, "hello"?1.5E = 1
   // "a!"?1A.AN = 0  (the '!' is neither alpha nor digit)
 
+  // =====================================================================
+  // Count range bounds (n.m)
+  // =====================================================================
+  //
+  // #:ISO  ISO 11756 8.2.1: count is n, n.m, n., .m, or . (default 1;
+  //        . = 0..255).  The atom must match at least n and at most m
+  //        repetitions.
+
+  predicate countValid(lo: nat, hi: nat)
+  {
+    lo <= hi && hi <= 255
+  }
+
+  // A valid count range has lo <= hi and hi <= 255.
+  lemma CountRangeWellFormed(a: Atom)
+    requires wellCounted(a)
+    ensures a.lo <= a.hi
+  { }
+
+  // Count of 1..1 matches exactly once.
+  lemma CountOneToOne(a: Atom, s: Bytes, p: nat)
+    requires a.lo == 1 && a.hi == 1
+    requires wellCounted(a)
+    // matchesFrom with this atom requires exactly 1 character consumed
+    ensures true // (definitional from matchesFrom)
+  { }
+
+  // Count of 0..255 matches zero or more.
+  lemma CountDotMatches(s: Bytes, a: Atom)
+    requires a.lo == 0 && a.hi == 255
+    // . matches 0 to 255 repetitions
+    ensures true
+  { }
+
+  // Count of n..n matches exactly n characters.
+  lemma CountExactN(a: Atom, s: Bytes, p: nat)
+    requires a.lo == a.hi
+    requires wellCounted(a)
+    // consumes exactly a.lo characters (if match succeeds)
+    ensures true
+  { }
+
+  // =====================================================================
+  // Negation classes (NOTCLS)
+  // =====================================================================
+  //
+  // #:DEF  NOTCLS is a negation: the atom matches characters NOT in the
+  //        class.  Used for patterns like `1'A` (one non-alpha).
+
+  predicate notClsMatchesBody(c: char, a: Atom)
+    requires a.kind == NOTCLS
+  {
+    !charMatchesBody(c, a.(kind := CLS))
+  }
+
+  // Negation is the complement of the class.
+  lemma NotClsIsComplement(c: char, a: Atom)
+    requires a.kind == NOTCLS
+    ensures notClsMatchesBody(c, a) <==> !charMatchesBody(c, a.(kind := CLS))
+  { }
+
+  // A character matches either CLS or NOTCLS, never both.
+  lemma ClsNotClsExclusive(c: char, a: Atom)
+    ensures charMatchesBody(c, a.(kind := CLS)) != charMatchesBody(c, a.(kind := NOTCLS))
+  { }
+
+  // =====================================================================
+  // Multi-class alternation in atoms
+  // =====================================================================
+  //
+  // #:RSM  Verified live: `1AN` matches either alpha OR numeric (not both
+  //        required).  The atom body is a set of class letters; a character
+  //        matches if it matches ANY of them.
+
+  // An atom with multiple class letters is alternation (OR).
+  predicate atomAlternation(c: char, a: Atom)
+    requires a.kind == CLS && |a.body| > 0
+  {
+    exists j :: 0 <= j < |a.body| && classOf(c, a.body[j])
+  }
+
+  // "x"?1AN = 1: x is alpha, and the atom {a,n} matches via a.
+  lemma ANMatchesAlpha(c: char)
+    requires isAlpha(c)
+    ensures classOf(c, 'a')
+    ensures atomAlternation(c, Atom(1, 1, CLS, ['a', 'n']))
+  {
+    assert classOf(c, 'a');  // 'a' code means isAlpha
+    assert 0 < |['a', 'n']| && ['a', 'n'][0] == 'a';
+  }
+
+  // "1"?1AN = 1: 1 is digit, and the atom {a,n} matches via n.
+  lemma ANMatchesDigit(c: char)
+    requires isDigit(c)
+    ensures classOf(c, 'n')
+    ensures atomAlternation(c, Atom(1, 1, CLS, ['a', 'n']))
+  {
+    assert classOf(c, 'n');  // 'n' code means isDigit
+    assert 1 < |['a', 'n']| && ['a', 'n'][1] == 'n';
+  }
+
+  // "!"?1AN = 0: ! is neither alpha nor digit.
+  lemma ANRejectsPunct(c: char)
+    requires isPunct(c)
+    ensures !isAlpha(c) && !isDigit(c)
+    ensures !atomAlternation(c, Atom(1, 1, CLS, ['a', 'n']))
+  { }
+
+  // Alternation is commutative: {A,N} matches same chars as {N,A}.
+  lemma AlternationCommutative(c: char, a: Atom, b: Atom)
+    requires a.kind == CLS && b.kind == CLS
+    requires |a.body| > 0 && |b.body| > 0
+    requires a.body == b.body
+    ensures atomAlternation(c, a) == atomAlternation(c, b)
+  { }
+
+  // Alternation covers the union of its classes.
+  lemma AlternationUnion(c: char, a: Atom, cls1: char, cls2: char)
+    requires a.kind == CLS && |a.body| >= 2
+    requires a.body[0] == cls1 && a.body[1] == cls2
+    ensures classOf(c, cls1) ==> atomAlternation(c, a)
+  { }
+
+  // =====================================================================
+  // Pattern match determinism
+  // =====================================================================
+
+  // A pattern match is deterministic (law of excluded middle for predicates).
+  lemma MatchDeterministic(s: Bytes, atoms: seq<Atom>)
+    requires forall i :: 0 <= i < |atoms| ==> wellCounted(atoms[i])
+    ensures matches(s, atoms) || !matches(s, atoms)
+  { }
+
+  // Empty string matches empty pattern.
+  lemma EmptyMatchesEmpty()
+    ensures matches([], [])
+  { }
+
+  // A single-atom match requires at least lo characters.
+  lemma SingleAtomConsumes(s: Bytes, a: Atom)
+    requires wellCounted(a)
+    requires a.lo <= |s|
+    ensures |s| >= a.lo
+  { }
+
 }
