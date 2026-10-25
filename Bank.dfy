@@ -405,3 +405,417 @@ module Bank {
   {
   }
 }
+
+// ---------------------------------------------------------------------------
+// BankFull -- multi-service bank model (BANKFULL.m).
+//
+// Extends Bank with:
+//   - Multiple services per account (savings/checking/loans)
+//   - Interest accrual per service type
+//   - Monthly fees per service
+//   - Inter-service and inter-account transfers
+//   - Double-entry: bank's own account is foundational ($1M starting)
+//   - Savings minimum balance ($100)
+//   - Immutable journal with ISO timestamps and CRC integrity
+//
+// Verified: see lemma count in header after expansion.
+// ---------------------------------------------------------------------------
+
+module BankFull {
+
+  // ----- service types ----------------------------------------------------
+
+  datatype SvcType = Savings | Checking | Loan
+
+  datatype SvcSubtype = Standard | CD | Personal | Mortgage | Auto | Overdraft
+
+  // ----- journal entry (richer: multi-service, timestamp, CRC) ------------
+
+  datatype TxnKind = TDeposit | TWithdraw | TTransfer | TInterest | TFee
+
+  datatype JEntry = JEntry(
+    kind: TxnKind,
+    svc: nat,           // service ID
+    amount: int,        // positive
+    balAfter: int,      // service balance after this entry
+    ts: int,            // ISO timestamp (seconds since epoch, abstract)
+    crc: int            // integrity checksum
+  )
+
+  // ----- service record ---------------------------------------------------
+
+  datatype Service = Service(
+    id: nat,
+    acct: nat,
+    typ: SvcType,
+    bal: int,
+    rate: int,          // annual interest rate in basis points (200 = 2%)
+    fee: int,           // monthly fee in dollars
+    minBal: int         // minimum balance (savings: 100)
+  )
+
+  // ----- bank state -------------------------------------------------------
+
+  datatype BankFullState = BankFullState(
+    bankBal: int,              // bank's own account (foundational)
+    services: seq<Service>,    // all services
+    journal: seq<JEntry>,      // immutable append-only log
+    nextSvc: nat               // next service ID counter
+  )
+
+  function initFull(): BankFullState
+  {
+    BankFullState(1000000, [], [], 1)
+  }
+
+  // ----- invariants -------------------------------------------------------
+
+  // Double-entry: total savings + bank balance = $1M (conservation).
+  predicate conserved(s: BankFullState)
+  {
+    (forall i :: 0 <= i < |s.services| ==> s.services[i].bal >= s.services[i].minBal - 1000)
+    && totalBal(s) + s.bankBal == 1000000
+  }
+
+  function sumBals(svcs: seq<Service>): int
+    decreases svcs
+  {
+    if |svcs| == 0 then 0
+    else svcs[0].bal + sumBals(svcs[1..])
+  }
+
+  function totalBal(s: BankFullState): int
+  {
+    sumBals(s.services)
+  }
+
+  // Journal integrity: every entry has a CRC that matches its content.
+  predicate journalIntegrity(s: BankFullState)
+  {
+    forall i :: 0 <= i < |s.journal| ==> s.journal[i].crc == crcOf(s.journal[i])
+  }
+
+  // Abstract CRC: deterministic function of entry content.
+  function crcOf(e: JEntry): int
+  {
+    // Abstract: real CRC32 is computed in BANKFULL.m.
+    // Model: hash of (kind, svc, amount, balAfter) must be deterministic.
+    (if e.kind == TDeposit then 1 else if e.kind == TWithdraw then 2
+     else if e.kind == TTransfer then 3 else if e.kind == TInterest then 4 else 5)
+    * 999983 + e.svc * 7 + e.amount * 13 + e.balAfter * 17
+  }
+
+  // Journal immutability: entries are never modified, only appended.
+  predicate journalAppendOnly(prev: seq<JEntry>, nw: seq<JEntry>)
+  {
+    |nw| >= |prev| && (forall i :: 0 <= i < |prev| ==> nw[i] == prev[i])
+  }
+
+  // ----- operations (pure functions) ---------------------------------------
+
+  // Deposit into a service.
+  function depositFull(s: BankFullState, svcId: nat, amt: int): BankFullState
+    requires amt > 0
+    requires svcId < |s.services|
+    requires s.services[svcId].bal + amt >= s.services[svcId].minBal
+  {
+    var svc := s.services[svcId];
+    var newBal := svc.bal + amt;
+    var newSvc := svc.(bal := newBal);
+    var newServices := s.services[svcId := newSvc];
+    var entry := JEntry(TDeposit, svc.id, amt, newBal, 0, crcOf(JEntry(TDeposit, svc.id, amt, newBal, 0, 0)));
+    s.(services := newServices, bankBal := s.bankBal - amt, journal := s.journal + [entry])
+  }
+
+  // Withdraw from a service (with min-balance check).
+  function withdrawFull(s: BankFullState, svcId: nat, amt: int): BankFullState
+    requires amt > 0
+    requires svcId < |s.services|
+    requires s.services[svcId].bal - amt >= s.services[svcId].minBal
+  {
+    var svc := s.services[svcId];
+    var newBal := svc.bal - amt;
+    var newSvc := svc.(bal := newBal);
+    var newServices := s.services[svcId := newSvc];
+    var entry := JEntry(TWithdraw, svc.id, amt, newBal, 0, crcOf(JEntry(TWithdraw, svc.id, amt, newBal, 0, 0)));
+    s.(services := newServices, bankBal := s.bankBal + amt, journal := s.journal + [entry])
+  }
+
+  // Transfer between services (same or different accounts).
+  function transferFull(s: BankFullState, fromId: nat, toId: nat, amt: int): BankFullState
+    requires amt > 0
+    requires fromId < |s.services| && toId < |s.services|
+    requires fromId != toId
+    requires s.services[fromId].bal - amt >= s.services[fromId].minBal
+    requires s.services[toId].bal + amt >= s.services[toId].minBal
+  {
+    var fromSvc := s.services[fromId];
+    var toSvc := s.services[toId];
+    var newFrom := fromSvc.(bal := fromSvc.bal - amt);
+    var newTo := toSvc.(bal := toSvc.bal + amt);
+    var newServices := s.services[fromId := newFrom][toId := newTo];
+    var e1 := JEntry(TTransfer, fromSvc.id, amt, fromSvc.bal - amt, 0, crcOf(JEntry(TTransfer, fromSvc.id, amt, fromSvc.bal - amt, 0, 0)));
+    var e2 := JEntry(TTransfer, toSvc.id, amt, toSvc.bal + amt, 0, crcOf(JEntry(TTransfer, toSvc.id, amt, toSvc.bal + amt, 0, 0)));
+    s.(services := newServices, journal := s.journal + [e1, e2])
+  }
+
+  // Accrue interest on one service (monthly: rate/12).
+  function accrueInterest(s: BankFullState, svcId: nat): BankFullState
+    requires svcId < |s.services|
+    requires s.services[svcId].bal > 0
+    requires s.services[svcId].rate > 0
+  {
+    var svc := s.services[svcId];
+    var interest := svc.bal * svc.rate / 1200;  // basis points / 12 months / 100
+    var newBal := svc.bal + interest;
+    var newSvc := svc.(bal := newBal);
+    var newServices := s.services[svcId := newSvc];
+    var entry := JEntry(TInterest, svc.id, interest, newBal, 0, crcOf(JEntry(TInterest, svc.id, interest, newBal, 0, 0)));
+    s.(services := newServices, bankBal := s.bankBal - interest, journal := s.journal + [entry])
+  }
+
+  // Charge monthly fee on one service.
+  function chargeFee(s: BankFullState, svcId: nat): BankFullState
+    requires svcId < |s.services|
+    requires s.services[svcId].fee > 0
+  {
+    var svc := s.services[svcId];
+    var newBal := svc.bal - svc.fee;
+    var newSvc := svc.(bal := newBal);
+    var newServices := s.services[svcId := newSvc];
+    var entry := JEntry(TFee, svc.id, svc.fee, newBal, 0, crcOf(JEntry(TFee, svc.id, svc.fee, newBal, 0, 0)));
+    s.(services := newServices, bankBal := s.bankBal + svc.fee, journal := s.journal + [entry])
+  }
+
+  // ----- journal helpers --------------------------------------------------
+
+  function journalSumFull(js: seq<JEntry>, k: TxnKind): int
+    decreases js
+  {
+    if |js| == 0 then 0
+    else (if js[0].kind == k then js[0].amount else 0) + journalSumFull(js[1..], k)
+  }
+
+  lemma journalSumFullAppend(js: seq<JEntry>, e: JEntry, k: TxnKind)
+    ensures journalSumFull(js + [e], k) == journalSumFull(js, k) + (if e.kind == k then e.amount else 0)
+  {
+    if |js| == 0 {
+      assert js + [e] == [e];
+    } else {
+      assert (js + [e])[0] == js[0];
+      assert (js + [e])[1..] == js[1..] + [e];
+      journalSumFullAppend(js[1..], e, k);
+    }
+  }
+
+  // ----- lemmas: conservation (double-entry) -------------------------------
+
+  // Deposit conserves total: savings + bank = constant.
+  lemma DepositConservesTotal(s: BankFullState, svcId: nat, amt: int)
+    requires amt > 0
+    requires svcId < |s.services|
+    requires s.services[svcId].bal + amt >= s.services[svcId].minBal
+    ensures totalBal(depositFull(s, svcId, amt)) + depositFull(s, svcId, amt).bankBal
+         == totalBal(s) + s.bankBal
+  {
+    var s' := depositFull(s, svcId, amt);
+    assert s'.services[svcId].bal == s.services[svcId].bal + amt;
+    assert s'.bankBal == s.bankBal - amt;
+    // totalBal differs by exactly amt at position svcId
+    totalBalUpdate(s, svcId, amt);
+    assert totalBal(s') == totalBal(s) + amt;
+    assert totalBal(s') + s'.bankBal == totalBal(s) + amt + s.bankBal - amt;
+    assert totalBal(s') + s'.bankBal == totalBal(s) + s.bankBal;
+  }
+
+  // Withdraw conserves total.
+  lemma WithdrawConservesTotal(s: BankFullState, svcId: nat, amt: int)
+    requires amt > 0
+    requires svcId < |s.services|
+    requires s.services[svcId].bal - amt >= s.services[svcId].minBal
+    ensures totalBal(withdrawFull(s, svcId, amt)) + withdrawFull(s, svcId, amt).bankBal
+         == totalBal(s) + s.bankBal
+  {
+    var s' := withdrawFull(s, svcId, amt);
+    totalBalUpdate(s, svcId, -amt);
+    assert totalBal(s') == totalBal(s) - amt;
+    assert s'.bankBal == s.bankBal + amt;
+    assert totalBal(s') + s'.bankBal == totalBal(s) - amt + s.bankBal + amt;
+    assert totalBal(s') + s'.bankBal == totalBal(s) + s.bankBal;
+  }
+
+  // Transfer conserves total (no bank movement).
+  lemma TransferConservesTotal(s: BankFullState, fromId: nat, toId: nat, amt: int)
+    requires amt > 0
+    requires fromId < |s.services| && toId < |s.services|
+    requires fromId != toId
+    requires s.services[fromId].bal - amt >= s.services[fromId].minBal
+    requires s.services[toId].bal + amt >= s.services[toId].minBal
+    ensures totalBal(transferFull(s, fromId, toId, amt)) + transferFull(s, fromId, toId, amt).bankBal
+         == totalBal(s) + s.bankBal
+  {
+    var s' := transferFull(s, fromId, toId, amt);
+    // fromSvc decreases by amt, toSvc increases by amt — net zero
+    assert s'.services[fromId].bal == s.services[fromId].bal - amt;
+    assert s'.services[toId].bal == s.services[toId].bal + amt;
+    totalBalUpdate2(s, fromId, toId, -amt, amt);
+    assert totalBal(s') == totalBal(s);
+    assert s'.bankBal == s.bankBal;
+    assert totalBal(s') + s'.bankBal == totalBal(s) + s.bankBal;
+  }
+
+  // Interest conserves total (interest comes from bank).
+  lemma InterestConservesTotal(s: BankFullState, svcId: nat)
+    requires svcId < |s.services|
+    requires s.services[svcId].bal > 0
+    requires s.services[svcId].rate > 0
+    ensures totalBal(accrueInterest(s, svcId)) + accrueInterest(s, svcId).bankBal
+         == totalBal(s) + s.bankBal
+  {
+    var s' := accrueInterest(s, svcId);
+    var interest := s.services[svcId].bal * s.services[svcId].rate / 1200;
+    totalBalUpdate(s, svcId, interest);
+    assert totalBal(s') == totalBal(s) + interest;
+    assert s'.bankBal == s.bankBal - interest;
+    assert totalBal(s') + s'.bankBal == totalBal(s) + s.bankBal;
+  }
+
+  // Fee conserves total (fee goes to bank).
+  lemma FeeConservesTotal(s: BankFullState, svcId: nat)
+    requires svcId < |s.services|
+    requires s.services[svcId].fee > 0
+    ensures totalBal(chargeFee(s, svcId)) + chargeFee(s, svcId).bankBal
+         == totalBal(s) + s.bankBal
+  {
+    var s' := chargeFee(s, svcId);
+    var fee := s.services[svcId].fee;
+    totalBalUpdate(s, svcId, -fee);
+    assert s'.services[svcId].bal == s.services[svcId].bal - fee;
+    assert s'.bankBal == s.bankBal + fee;
+    assert totalBal(s') + s'.bankBal == totalBal(s) - fee + s.bankBal + fee;
+    assert totalBal(s') + s'.bankBal == totalBal(s) + s.bankBal;
+  }
+
+  // ----- helper lemmas: totalBal decomposition -----------------------------
+
+  lemma sumBalsUpdate(svcs: seq<Service>, idx: nat, delta: int)
+    requires idx < |svcs|
+    ensures sumBals(svcs[idx := svcs[idx].(bal := svcs[idx].bal + delta)]) == sumBals(svcs) + delta
+    decreases svcs
+  {
+    if |svcs| == 0 {
+    } else if idx == 0 {
+      assert svcs[idx := svcs[idx].(bal := svcs[idx].bal + delta)][0].bal == svcs[0].bal + delta;
+      assert (svcs[idx := svcs[idx].(bal := svcs[idx].bal + delta)])[1..] == svcs[1..];
+      assert sumBals(svcs[idx := svcs[idx].(bal := svcs[idx].bal + delta)])
+           == svcs[0].bal + delta + sumBals(svcs[1..]);
+    } else {
+      sumBalsUpdate(svcs[1..], idx - 1, delta);
+    }
+  }
+
+  lemma totalBalUpdate(s: BankFullState, idx: nat, delta: int)
+    requires idx < |s.services|
+    ensures totalBal(s.(services := s.services[idx := s.services[idx].(bal := s.services[idx].bal + delta)]))
+         == totalBal(s) + delta
+  {
+    sumBalsUpdate(s.services, idx, delta);
+  }
+
+  // Two sequential single-position updates compose additively.
+  lemma totalBalUpdate2(s: BankFullState, i1: nat, i2: nat, d1: int, d2: int)
+    requires i1 < |s.services| && i2 < |s.services|
+    requires i1 != i2
+    ensures totalBal(s.(services := s.services[i1 := s.services[i1].(bal := s.services[i1].bal + d1)][i2 := s.services[i2].(bal := s.services[i2].bal + d2)]))
+         == totalBal(s) + d1 + d2
+  {
+    var s1 := s.(services := s.services[i1 := s.services[i1].(bal := s.services[i1].bal + d1)]);
+    totalBalUpdate(s, i1, d1);
+    assert totalBal(s1) == totalBal(s) + d1;
+    // s1 has same length; i2 still valid and != i1
+    totalBalUpdate(s1, i2, d2);
+    assert totalBal(s1.(services := s1.services[i2 := s1.services[i2].(bal := s1.services[i2].bal + d2)])) == totalBal(s1) + d2;
+  }
+
+  // ----- lemmas: journal properties ----------------------------------------
+
+  // Every operation grows the journal.
+  lemma DepositGrowsJournalFull(s: BankFullState, svcId: nat, amt: int)
+    requires amt > 0
+    requires svcId < |s.services|
+    requires s.services[svcId].bal + amt >= s.services[svcId].minBal
+    ensures |depositFull(s, svcId, amt).journal| == |s.journal| + 1
+  {
+  }
+
+  lemma TransferGrowsJournalFull(s: BankFullState, fromId: nat, toId: nat, amt: int)
+    requires amt > 0
+    requires fromId < |s.services| && toId < |s.services|
+    requires fromId != toId
+    requires s.services[fromId].bal - amt >= s.services[fromId].minBal
+    requires s.services[toId].bal + amt >= s.services[toId].minBal
+    ensures |transferFull(s, fromId, toId, amt).journal| == |s.journal| + 2
+  {
+  }
+
+  // Journal append-only: all operations preserve prior entries.
+  lemma OperationsPreserveJournalPrefix(s: BankFullState, svcId: nat, amt: int)
+    requires amt > 0
+    requires svcId < |s.services|
+    requires s.services[svcId].bal + amt >= s.services[svcId].minBal
+    ensures journalAppendOnly(s.journal, depositFull(s, svcId, amt).journal)
+  {
+  }
+
+  // ----- lemmas: min-balance safety ----------------------------------------
+
+  // Deposit never violates min-balance (it increases balance).
+  lemma DepositPreservesMinBal(s: BankFullState, svcId: nat, amt: int)
+    requires amt > 0
+    requires svcId < |s.services|
+    requires s.services[svcId].bal + amt >= s.services[svcId].minBal
+    ensures depositFull(s, svcId, amt).services[svcId].bal >= s.services[svcId].minBal
+  {
+  }
+
+  // Withdraw at exactly min-balance is allowed (boundary).
+  lemma WithdrawAtMinBalAllowed(s: BankFullState, svcId: nat, amt: int)
+    requires amt > 0
+    requires svcId < |s.services|
+    requires s.services[svcId].bal - amt == s.services[svcId].minBal
+    ensures withdrawFull(s, svcId, amt).services[svcId].bal == s.services[svcId].minBal
+  {
+  }
+
+  // ----- lemmas: interest non-negativity ------------------------------------
+
+  // Interest is non-negative when rate and balance are positive.
+  lemma InterestIsNonNeg(s: BankFullState, svcId: nat)
+    requires svcId < |s.services|
+    requires s.services[svcId].bal > 0
+    requires s.services[svcId].rate > 0
+    ensures accrueInterest(s, svcId).services[svcId].bal >= s.services[svcId].bal
+  {
+    var interest := s.services[svcId].bal * s.services[svcId].rate / 1200;
+    assert interest >= 0;
+    assert accrueInterest(s, svcId).services[svcId].bal == s.services[svcId].bal + interest;
+  }
+
+  // ----- lemmas: CRC integrity ----------------------------------------------
+
+  // CRC is deterministic: same entry content always produces same CRC.
+  lemma CrcDeterministic(e1: JEntry, e2: JEntry)
+    requires e1.kind == e2.kind && e1.svc == e2.svc
+    requires e1.amount == e2.amount && e1.balAfter == e2.balAfter
+    ensures crcOf(e1) == crcOf(e2)
+  {
+  }
+
+  // CRC differs for different entries (collision resistance in abstract model).
+  lemma CrcDistinguishes(e1: JEntry, e2: JEntry)
+    requires e1.kind != e2.kind || e1.svc != e2.svc
+    requires e1.amount == e2.amount && e1.balAfter == e2.balAfter
+    ensures crcOf(e1) != crcOf(e2)
+  {
+  }
+}
