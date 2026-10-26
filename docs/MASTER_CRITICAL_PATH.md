@@ -5,7 +5,7 @@
 
 **Name lock:** **MeshGraph** = product · **`ydb-mesh`** = code · **JavaM** = `mjandrews1/JavaM` (JvMumps) · **mjvm** = `mjandrews1/mjvm` (JIT engine, now a separate repo) · **tsx** = Comdb2 time-series.
 
-**Focus (2026-10-26):** P0–P5 worked 2026-10-26 (mjvm **v2.2.1** shipped · silent-recovery fixed · tieredstore-rs CI green · mirror health logged) · **YottaDB family PAUSED** · remaining: portal rotation, U04 role, compiler coverage 60%.
+**Focus (2026-10-26):** mjvm **v2.2.2** shipped (silent-recovery rounds 1+2) · **VistA ledger: 63% of corpus had silently-swallowed lines** → new syntax backlog · AGENTS.md error policy adopted fleet-wide · **YottaDB family PAUSED** · remaining: portal rotation, U04 role.
 
 ## How to read
 
@@ -61,8 +61,11 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | GAUNTLET 134/134 · corpus 139/139 · CoreUnitTest 135/135 | **DONE** | Verified 2026-10-26, all suites on Mac |
 | Silent-recovery audit | **DONE — v2.2.1** | Found THREE silent depth returns (compile, compileInto, **compileForSpec** — the last silently dropped a 16th nested inline FOR's whole body, a real pre-existing bug). All now throw MError; swallowed lines logged + recorded in new `lastSwallowedErrors()` ledger; compileDepth balanced via try/finally (leaked on every compile error before). 2 new regression tests (32/32). Released as **v2.2.1** (v2.2.0 was already tagged Oct 25) |
 | Compiler coverage | **MEASURED, TARGET OPEN** | 36.4% lines (total project 79%, runtime 62.3% — the old "19%" CHANGELOG figure predates CoreUnitTest). 60% compiler target remains open work: peephole + error paths first |
+| Silent-recovery audit round 2 | **DONE — v2.2.2** | Four more sites fixed (unknown-command skip → throw; WRITE-sub swallow → propagate; `$GET`/`$DATA` catches narrowed to the undefined case). 32/32 regression, GAUNTLET 134/134, corpus 139/139 |
 | README perf-number consistency | **DONE** | Contradicting "13.5M txn/ms" removed; BankFull table is now the single source |
-| Tag/release | **DONE** | v2.2.1 tagged + pushed (e5f1c11); GAUNTLET/corpus/core green post-change |
+| **VistA swallowed-syntax backlog** | **OPEN — new top correctness item** | VistA ledger run (v2.2.2): 21,452 of 33,951 routines (63.2%) had lines silently replaced with RET. Causes: dotted-line continuation (`.`), argument indirection (`@`), continuation commas, expression SET targets. Each is a real M feature to implement (or explicitly reject), one ledger class at a time |
+| Tag/release | **DONE** | v2.2.1, v2.2.2 tagged + pushed; GAUNTLET/corpus/core green post-change |
+| **AGENTS.md error policy** | **DONE — fleet-wide** | Adopted in all 8 repos 2026-10-26. Pushed: mjvm, mformatter, tieredstore-rs (direct), m-semantics (PR #51), m-lsp (PR #15). Local-only (repos archived): jvmumps, pymumps, fileman |
 
 ## P2 — JavaM / m-semantics
 
