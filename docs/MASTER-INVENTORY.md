@@ -226,7 +226,13 @@ All phases of the strategy below were executed and verified unless noted.
 - **Phase 3:** U03 mirrors added: `mjvm.git`, `mformatter.git` (cloned from GitHub), `fileman.git` (seeded by push from Mac after GitHub throttled U03's clone; origin set, HEAD verified). 10 mirrors total. `tieredstore-rs` still unmirrored — no GitHub remote exists (creating one requires the user).
 - **Phase 4:** mjvm stray H2 artifacts, `.idea/`, `mjvm.iml`, jqassistant scan output deleted (tracked jqassistant config restored after accidental deletion). Version unified to 2.2.0 (CLI `Mjvm.VERSION`, Makefile dist); README GAUNTLET headline fixed 92/92 → 134/134. Commit c3f36cf passed full pre-commit gauntlet.
 - **Phase 5:** Four skills ported to `~/.vibe/skills/`: `host-jobs` (+U03), `meshgraph-search` (marked PAUSED), `m-corpus` (Mac paths, C3 clone note), `path` (no password). `meshgraph_follow.py` copied. `~/CRITICAL_PATH.md` recreated from `m-semantics/docs/`.
-- **Still open:** portal password rotation (user); `tieredstore-rs` GitHub remote (user decision); m-semantics commits not yet pushed (2 commits on main: 755f7c7 + this one); U04 role decision.
+- **Still open:** portal password rotation (user); U04 role decision.
+
+### Follow-ups landed 2026-10-26 (items 2–3 of the handoff list)
+
+- **m-semantics pushed** via PR #47 (merge commit d730b47) — direct pushes to main are branch-policy-blocked; the PR path is the convention. mjvm c3f36cf pushed directly.
+- **`tieredstore-rs` published**: https://github.com/mjandrews1/tieredstore-rs (public, matching the fleet; the U03 mirror fetches unauthenticated HTTPS). Full history pushed from Mac; U03 mirror cloned and verified.
+- **U03 mirror bug found and fixed**: no mirror (old or new) had a `remote.origin.fetch` refspec, so the hourly `fetch --prune` only updated `FETCH_HEAD` — every mirror was frozen at its creation snapshot. All 11 mirrors now carry `+refs/heads/*:refs/heads/*`; a live sync run verified mjvm → c3f36cf and JavaM → bce4e4c against GitHub.
 
 ## 10. Open questions (pre-cleanup; status updated 2026-10-26)
 
