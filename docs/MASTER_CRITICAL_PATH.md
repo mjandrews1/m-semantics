@@ -5,7 +5,7 @@
 
 **Name lock:** **MeshGraph** = product · **`ydb-mesh`** = code · **JavaM** = `mjandrews1/JavaM` (JvMumps) · **mjvm** = `mjandrews1/mjvm` (JIT engine, now a separate repo) · **tsx** = Comdb2 time-series.
 
-**Focus (2026-10-26):** mjvm v2.2.0 hardening close-out · JavaM REPL · fleet consolidation DONE · **YottaDB family PAUSED** (MeshGraph, tsx, comdb2) · U04 unprovisioned.
+**Focus (2026-10-26):** P0–P5 worked 2026-10-26 (mjvm **v2.2.1** shipped · silent-recovery fixed · tieredstore-rs CI green · mirror health logged) · **YottaDB family PAUSED** · remaining: portal rotation, U04 role, compiler coverage 60%.
 
 ## How to read
 
@@ -17,12 +17,12 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 
 | Project | Role | State | Stream |
 |---------|------|-------|--------|
-| **mjvm** | M → JVM JIT engine (v2.2.0, GAUNTLET 134/134) | active, Mac-only tree | **P1** |
-| **JavaM** (JvMumps) | full-M oracle + LineEngine (v1.2.0, 1.0 gate achieved) | active | **P1** |
+| **mjvm** | M → JVM JIT engine (v2.2.1, GAUNTLET 134/134) | active, Mac-only tree | **P1** |
+| **JavaM** (JvMumps) | full-M oracle + LineEngine (v1.2.0, 1.0 gate achieved; repo ARCHIVED) | active-local | **P2** |
 | **m-semantics** | Dafny spec (464 lemmas) + master docs | active | P2 |
 | **m-lsp** | language server | active, clean | P3 |
-| **mformatter** | M formatter | idle, 1 untracked script | P3 |
-| **tieredstore-rs** | Rust TieredStore prototype (published 2026-10-26) | active | P4 |
+| **mformatter** | M formatter | idle | P3 |
+| **tieredstore-rs** | Rust TieredStore prototype (published, CI green) | active | P4 |
 | **pymumps** | peer corpus host (restored on Mac) | active | P5 |
 | **fileman** | frozen VistA corpus | frozen | FROZEN |
 | **MeshGraph / ydb-mesh** | YottaDB citation index | **PAUSED** | FROZEN |
@@ -31,18 +31,15 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 
 ---
 
-## Critical path (2026-10-26)
+## Critical path (2026-10-26, post-P0–P5)
 
 ```
-  P0a Portal password rotation          (user, outstanding since 2026-10-26)
-  P0b U01 YottaDB journal trim          (overdue — backup_then_prune WARN 2026-10-17)
-  P0c U04 role decision                (unprovisioned MacMini 1TB)
-  P1a mjvm hardening close-out         (compiler coverage, silent-recovery audit, README units)
-  P1b mjvm v2.2.0 release tag          (CHANGELOG done, no git tag yet)
+  P0a Portal password rotation          (user — only remaining P0 item)
+  P0b U04 role decision                (user)
+  P1a mjvm compiler coverage 36.4% → 60% (peephole + error paths first)
   P2a JavaM REPL                       (#35/#36 — both engines)
   P2b JavaM rename hygiene + VistA     (#27, #34)
-  P3  tieredstore-rs                    (README, CI, spec sync)
-  P4  Infra: backup redundancy + U03 mirror health + monitoring
+  P4  Infra: U02 backup second copy    (awaiting U04 provisioning)
   P5  Paused-family resume checklist   (documented below, do not act)
 ```
 
@@ -53,20 +50,19 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | Work | Status | Note |
 |------|--------|------|
 | Rotate portal credential (`home.flamingyak.com`) | **OPEN** (user) | Scrubbed from skill files 2026-10-26; rotation itself outstanding |
-| U01 journal trim | **OPEN** | `backup_then_prune.log` 2026-10-17: `WARN rotated journals exceed keep (3) — run journal trim` · `CAP CHECK fail=1`. Keep current `yottadb.mjl` + 2 newest; `ls yottadb.mjl_* \| sort \| head -n -2 \| xargs rm -f` |
+| U01 journal trim | **RESOLVED (no-op)** | Oct 17 WARN was stale — zero rotated `yottadb.mjl_*` remain; rotation cannot recur while the DB is quiescent. No cron added (dead weight while paused) |
 | U04 role decision | **OPEN** (user) | 1TB MacMini. Candidates: second copy of U02's 222G `meshgraph-backup` (single-copy risk) · PubMed coldstore continuation if YDB resumes (PIPELINE-PAUSED option 3) · CI runner |
-| jvmumps working tree | **OPEN** | `BankScaleBench.java` modified, uncommitted — commit or discard |
+| jvmumps working tree | **DONE** | `BankScaleBench --cache` flag committed (954dff2) — **local-only**: JavaM repo is ARCHIVED on GitHub (read-only), so the commit cannot be pushed. Frozen-oracle policy applies |
 
 ## P1 — mjvm (primary dev)
 
 | Work | Status | Note |
 |------|--------|------|
-| GAUNTLET 134/134 · regression 30/30 · corpus 139/139 | **DONE** | Verified 2026-10-26, all suites on Mac |
-| Version unified 2.2.0 (CLI/dist/CHANGELOG) | **DONE** | c3f36cf, pushed |
-| Compiler coverage: 36% → target 60% | **OPEN** | Compiler is where all 10 v2.2.0 bugs lived; peephole + error-recovery paths first |
-| Silent-recovery audit | **OPEN** | `DEPTH30` returns empty IR silently (MFrontend); historical error-handler replaced bad lines with RET. Convert to hard errors |
-| README perf-number consistency | **OPEN** | Units differ across tables (10,155K vs 13.5M vs 83.6M txn/ms); pick one benchmark format |
-| Tag `v2.2.0` + release | **OPEN** | Use RELEASE-CHECKLIST.md |
+| GAUNTLET 134/134 · corpus 139/139 · CoreUnitTest 135/135 | **DONE** | Verified 2026-10-26, all suites on Mac |
+| Silent-recovery audit | **DONE — v2.2.1** | Found THREE silent depth returns (compile, compileInto, **compileForSpec** — the last silently dropped a 16th nested inline FOR's whole body, a real pre-existing bug). All now throw MError; swallowed lines logged + recorded in new `lastSwallowedErrors()` ledger; compileDepth balanced via try/finally (leaked on every compile error before). 2 new regression tests (32/32). Released as **v2.2.1** (v2.2.0 was already tagged Oct 25) |
+| Compiler coverage | **MEASURED, TARGET OPEN** | 36.4% lines (total project 79%, runtime 62.3% — the old "19%" CHANGELOG figure predates CoreUnitTest). 60% compiler target remains open work: peephole + error paths first |
+| README perf-number consistency | **DONE** | Contradicting "13.5M txn/ms" removed; BankFull table is now the single source |
+| Tag/release | **DONE** | v2.2.1 tagged + pushed (e5f1c11); GAUNTLET/corpus/core green post-change |
 
 ## P2 — JavaM / m-semantics
 
@@ -84,27 +80,27 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | Work | Status | Note |
 |------|--------|------|
 | m-lsp | **CLEAN** at c9ba9dd | No open work identified |
-| mformatter | **OPEN** | `run_mformatter.sh` untracked — commit or archive; ISO-8859-1 fix landed |
+| mformatter | **DONE** | `run_mformatter.sh` (parallel VistA corpus driver) committed + pushed (b04cc88) |
 
 ## P4 — tieredstore-rs (new repo)
 
 | Work | Status | Note |
 |------|--------|------|
-| Published github.com/mjandrews1/tieredstore-rs | **DONE** | 2 commits, mirrored on U03 |
-| README | **OPEN** | Repo has no README (only module docs) |
-| CI (GitHub Actions: cargo test) | **OPEN** | No CI today; property tests must run in the cloud |
-| Spec sync with `TieredStore.dfy` | **OPEN** | Keep property tests tracking the Dafny spec |
+| Published github.com/mjandrews1/tieredstore-rs | **DONE** | Mirrored on U03 |
+| README | **DONE** | Architecture, module map, Dafny-lemma test table |
+| CI (build + clippy -D warnings + fmt + property tests) | **DONE** | First run green (36s); clippy warnings + formatting fixed pre-push |
+| Spec sync with `TieredStore.dfy` | **DONE (initial)** | 9 runtime property tests map to Dafny lemmas; keep tracking the spec |
 
 ## P5 — Infrastructure
 
 | Work | Status | Note |
 |------|--------|------|
 | Fleet consolidation (archives → U02, dedup, mirrors) | **DONE** | 2026-10-26, all checksums verified — see MASTER-INVENTORY |
-| U03 mirror sync bug (frozen snapshots) | **DONE** | All 11 mirrors now carry `+refs/heads/*:refs/heads/*`; verified live |
-| U03 mirror health visibility | **OPEN** | `update_git_mirrors.sh` is silent on success — add a timestamped log line or last-success marker so staleness is detectable |
+| U03 mirror sync bug (frozen snapshots) | **DONE** | All 11 mirrors carry `+refs/heads/*:refs/heads/*`; verified live |
+| U03 mirror health visibility | **DONE** | `update_git_mirrors.sh` logs a timestamped `mirrors-synced: N repos` line per run; staleness detectable from `git-mirrors.log` |
+| Monitoring | **CONFIRMED PRESENT** | U01 + U02 forward `*.*` to U03 via rsyslog TCP 514 (`60-forward-u03.conf`); U03 stores per-host under `/var/log/remote/{utility-01,02,03}`. Fleet-wide central logging exists — the earlier "no monitoring" claim was wrong |
 | U02 `meshgraph-backup` (222G) single copy | **OPEN** | Top data risk. Second copy → U04 when provisioned |
-| U01 journal rotation while paused | **OPEN** | Optional weekly cron for the manual trim (runbook procedure) |
-| Monitoring / alerting | **OPEN** | None fleet-wide. Minimum: nightly disk/mirror/report ping (U03 cron could host it) |
+| U01 journal rotation while paused | **CLOSED** | No rotated journals exist; cannot recur without a writer. On resume: manual trim per runbook |
 | GitHub App connector | **NOTE** | Lacks repo-create + PR perms; use `gh` CLI on Mac (authed, works) |
 
 ## P6 — Paused family: resume checklist (do NOT act while paused)
