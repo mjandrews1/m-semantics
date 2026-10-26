@@ -13,6 +13,9 @@
 | U01 (utility-01) | 100.72.84.8 | Live YottaDB host (ydb-mesh), pipeline state | 456G, 62% used (~283G) |
 | U02 (utility-02) | 100.89.100.53 | Cold storage / archive | 837G, 48% used (~400G) |
 | U03 (utility-03) | 100.121.132.5 | Git mirrors + public-IP/DNS updater | 98G, 36% used |
+| U04 (new MacMini) | (to be assigned) | UNDECIDED — 8GB RAM, 1TB HDD, fresh setup | 1TB |
+
+**U04 role candidates** (2026-10-26): U01's `PIPELINE-PAUSED.md` (2026-09-25) says the owner's plan was to "finish PubMed on the MacMini cold store" — a 1TB MacMini is exactly that machine, making U04 the natural YottaDB continuation host if the project resumes. Alternatives: second copy of U02's 222G meshgraph-backup (redundancy), CI runner for the M projects (8GB RAM is ample for javac/Dafny), or a dedicated backup target. No decision made yet.
 
 Other Tailscale nodes: iphone-se-gen-3 (100.89.191.84). `home.flamingyak.com` → U01 (IP kept current by U03 cron).
 
@@ -213,9 +216,21 @@ Add mirrors for: **mjvm** (flagship, currently unmirrored), `mformatter`, `tiere
 
 ---
 
-## 8. Open questions
+## 9. Cleanup Execution Record (2026-10-26)
 
-1. Is U02's 222G `meshgraph-backup` current relative to the paused pipeline? (Verify before any pruning of U01 YDB state.)
-2. Does `mjvm` have a GitHub remote? It's absent from U03 mirrors — if the remote exists, add the mirror; if not, create one (U03 is currently no backup for the flagship).
+All phases of the strategy below were executed and verified unless noted.
+
+- **Phase 0:** portal password removed from `.mimocode/command/path.md` (USER ACTION REMAINING: rotate the actual credential on the portal). Backup currency verified: U02 `meshgraph-backup/yottadb.dat` (Oct 16) postdates last YDB journal write (Oct 10). Inventory committed to `m-semantics` (755f7c7).
+- **Phase 1:** U01 `coldstore` (13G), `sync-backup-2026-10-12`, bench dirs → `U02:coldstore/u01-archive-2026-10-26/` (verified 30/30 files + md5), sources deleted from U01. bench-archive kept (single vintage). Mac `data/` staging (12G) verified against `U02:coldstore/_data/` — `pubmed-baseline` was missing and one nlm file truncated; both repaired from the Mac (md5-verified), then Mac staging dirs + 3 duplicate tarballs deleted. `data/` now 844K (rsm runtime data only).
+- **Phase 2:** 18 duplicated working trees deleted from U01 (~13G freed; disk 62%→56%), 19 from U02. U01 mg-* bibliographies archived to `u01-archive-2026-10-26/bibliographies/`. Mac `rsm/` archived to `U02:coldstore/mac-rsm-2026-10-26/` (all 1072 checksums verified) and deleted. `~/pymumps` restored on Mac from U03 mirror, origin repointed to GitHub; mjvm J0Smoke with corpus: 139/139 OK.
+- **Phase 3:** U03 mirrors added: `mjvm.git`, `mformatter.git` (cloned from GitHub), `fileman.git` (seeded by push from Mac after GitHub throttled U03's clone; origin set, HEAD verified). 10 mirrors total. `tieredstore-rs` still unmirrored — no GitHub remote exists (creating one requires the user).
+- **Phase 4:** mjvm stray H2 artifacts, `.idea/`, `mjvm.iml`, jqassistant scan output deleted (tracked jqassistant config restored after accidental deletion). Version unified to 2.2.0 (CLI `Mjvm.VERSION`, Makefile dist); README GAUNTLET headline fixed 92/92 → 134/134. Commit c3f36cf passed full pre-commit gauntlet.
+- **Phase 5:** Four skills ported to `~/.vibe/skills/`: `host-jobs` (+U03), `meshgraph-search` (marked PAUSED), `m-corpus` (Mac paths, C3 clone note), `path` (no password). `meshgraph_follow.py` copied. `~/CRITICAL_PATH.md` recreated from `m-semantics/docs/`.
+- **Still open:** portal password rotation (user); `tieredstore-rs` GitHub remote (user decision); m-semantics commits not yet pushed (2 commits on main: 755f7c7 + this one); U04 role decision.
+
+## 10. Open questions (pre-cleanup; status updated 2026-10-26)
+
+1. ~~Is U02's 222G `meshgraph-backup` current?~~ **RESOLVED** — backup (Oct 16) postdates last journal write (Oct 10).
+2. ~~Does `mjvm` have a GitHub remote?~~ **RESOLVED** — `github.com/mjandrews1/mjvm.git`; mirrored on U03.
 3. Root crontabs on U01/U02 uninspected (no sudo) — assumed clean given stock /etc/cron.* contents.
-4. `data/pubmed-baseline` (1.4G) and loose `pubmed26n1560.xml` — single copy on Mac? Confirm archive location before deleting.
+4. ~~`data/pubmed-baseline` single copy on Mac?~~ **RESOLVED** — archived to `U02:coldstore/_data/pubmed-baseline` (md5-verified), Mac copy deleted.
