@@ -35,7 +35,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 
 ```
   P0a Portal password rotation          (user — only remaining P0 item)
-  P0c Tailscale auth on U04             (user — URL held on U04 console)
+  P0d U03 sshd hardening                (PasswordAuthentication not explicitly disabled; public SSH under constant brute-force)
   P1a mjvm compiler coverage 36.4% → 60% (peephole + error paths first)
   P2a JavaM REPL                       (#35/#36 — both engines)
   P2b JavaM rename hygiene + VistA     (#27, #34)
@@ -51,7 +51,8 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 |------|--------|------|
 | Rotate portal credential (`home.flamingyak.com`) | **OPEN** (user) | Scrubbed from skill files 2026-10-26; rotation itself outstanding |
 | U01 journal trim | **RESOLVED (no-op)** | Oct 17 WARN was stale — zero rotated `yottadb.mjl_*` remain; rotation cannot recur while the DB is quiescent. No cron added (dead weight while paused) |
-| U04 role decision + commissioning | **DONE — CI runner (2026-10-27)** | Late-2014 **Mac mini** hardware running Ubuntu 26.04 LTS — **i5-4278U, 2C/4T, 7.1G RAM, 1TB spinning HDD**. LAN `192.168.0.32`; Tailscale installed, **auth pending (user)**. 4 per-repo GitHub Actions runners (`u04-mjvm/-m-lsp/-m-semantics/-tieredstore-rs`) online as systemd services; rsyslog → U03; all 4 CI workflows flipped to `self-hosted` (m-lsp PR #16, m-semantics PR #55, both merged) |
+| U04 role decision + commissioning | **DONE — CI runner (2026-10-27)** | Late-2014 **Mac mini** hardware running Ubuntu 26.04 LTS — **i5-4278U, 2C/4T, 7.1G RAM, 1TB spinning HDD**. Hostname `utility-04`; Tailscale **100.79.52.105** (authed 2026-10-27); LAN fallback `192.168.0.32`. 4 per-repo GitHub Actions runners (`u04-mjvm/-m-lsp/-m-semantics/-tieredstore-rs`) online as systemd services; rsyslog → U03 verified; all 4 CI workflows flipped to `self-hosted` (m-lsp PR #16, m-semantics PR #55, both merged) |
+| U03 sshd hardening | **OPEN** | U03 is the fleet's public edge (router forwards 22/80/443). SSH under sustained botnet brute-force since 2026-10-20 (~16.8k attempts, fail2ban active with ~807 bans). sshd config left at Ubuntu defaults — `PasswordAuthentication` not explicitly `no` (U01 has it; U03 should match). Needs sudo on U03 |
 | jvmumps working tree | **DONE** | `BankScaleBench --cache` flag committed (954dff2) — **local-only**: JavaM repo is ARCHIVED on GitHub (read-only), so the commit cannot be pushed. Frozen-oracle policy applies |
 
 ## P1 — mjvm (primary dev)
