@@ -5,7 +5,7 @@
 
 **Name lock:** **MeshGraph** = product · **`ydb-mesh`** = code · **JavaM** = `mjandrews1/JavaM` (JvMumps) · **mjvm** = `mjandrews1/mjvm` (JIT engine, now a separate repo) · **tsx** = Comdb2 time-series.
 
-**Focus (end of 2026-10-27):** mjvm v2.2.2 shipped · U04 commissioned (CI runner, all 4 repos green on self-hosted) · fleet hardened (key-only SSH, UFW everywhere, public 22 closed, edge containerized + fenced on U03) · **MeshGraph RESUMED** (services + edge + daily updates + backup timers live) · **Dafny corpus 547 verified** (GraphStore + BM25 + Scan) · c3fst deprecated · remaining: portal rotation (user), U02 backup second copy, mjvm class-4 comma backlog.
+**Focus (end of 2026-10-27):** mjvm v2.2.2 shipped · U04 commissioned (CI runner, all 4 repos green on self-hosted) · fleet hardened (key-only SSH, UFW everywhere, public 22 closed, edge containerized + fenced on U03) · **MeshGraph RESUMED** (services + edge + daily updates + backup timers live) · **Dafny corpus 547 verified** (GraphStore + BM25 + Scan) · **swiftm (spec-first M in Swift) PROPOSED** as P7 · c3fst deprecated · remaining: portal rotation (user), U02 backup second copy, mjvm class-4 comma backlog.
 
 ## How to read
 
@@ -23,6 +23,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | **MeshGraph / ydb-mesh** | YottaDB citation index (41.2M articles, 2.8B postings; repo ARCHIVED) | **ACTIVE — resumed 2026-10-27** | **P5** |
 | **m-lsp** | language server | active, clean | P3 |
 | **mformatter** | M formatter | idle | P3 |
+| **swiftm** (proposed) | spec-first M in Swift — validates Dafny proofs against an independent implementation; native Apple Silicon; actor-based JOB/LOCK | **PROPOSED** — after P1/P2 stabilize | **P7** |
 | **tieredstore-rs** | Rust TieredStore prototype (published, CI green on u04) | active | P4 |
 | **pymumps** | peer corpus host (restored on Mac) | active | P5 |
 | **fileman** | frozen VistA corpus | frozen | FROZEN |
@@ -47,6 +48,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
   P5c MeshGraph: BM25 WAND pruning            (gated by proven PrunedScanYieldsTopK)
   P5d MeshGraph: MCP registry listings        (ydb-mesh#28 — Smithery + official)
   P5e MeshGraph: MARC author pass + updatefile retention (small)
+  P7  swiftm: spec-first M in Swift            (after P1b lands; validates Dafny)
 ```
 
 ---
@@ -138,6 +140,48 @@ All items **DONE** (published, README, CI green on u04, initial spec sync). Keep
 
 ---
 
+## P7 — swiftm: spec-first M in Swift (PROPOSED)
+
+**Rationale:** a greenfield implementation of M in Swift for macOS, written to the ISO standard (11756) with the m-semantics Dafny proofs (547 lemmas) as the executable specification. Not a replacement for mjvm or JavaM — a **specification validation tool**.
+
+### What it teaches
+
+| Question | How swiftm answers it |
+|---|---|
+| Are the Dafny proofs complete? | Two independent implementations (JVM + Swift) against the same spec — any divergence is a proof gap or implementation bug |
+| What does ISO M actually require? | Spec-first implementation exposes gaps the VistA-recovery approach can't see (dot-level semantics, SET evaluation order, postconditional universality, $ETRAP/JOB interaction) |
+| What's the conforming core vs. VistA accretion? | Implement just enough to pass the 139-test corpus; measure the delta to full VistA conformance |
+| Can M's concurrency be provable? | Swift actors for JOB/LOCK — compile-time data-race safety instead of runtime testing |
+| How fast is native code? | GAUNTLET on Apple Silicon — a JVM vs. AOT performance comparison point |
+
+### Architecture sketch
+
+- **Swift Package Manager**: separate modules for parser, IR, runtime, storage
+- **`enum MValue`** with associated values — the type system forces enumerating all value forms
+- **Actor model** for JOB + LOCK — M's multi-process semantics map naturally to Swift's isolation guarantees
+- **Swift protocols with associated types** for the global store — more expressive than Java's `StoreApi` interface
+- **Value semantics** for globals — Swift's copy-on-write structs apply `GraphStore.dfy` invariants naturally
+- **AOT compilation** — no JVM warm-up; relevant for M's traditional quick-script role
+
+### Scope guard (what NOT to do)
+
+- **Do NOT** implement the full VistA syntax surface (21k swallowed-line cases) — that's mjvm's job
+- **Do NOT** replace JavaM as the conformance oracle
+- **Do NOT** add server deployment — macOS-only; the fleet is Linux
+- **Do NOT** start before P1b (comma) lands — the Dafny spec needs to cover the comma semantics first
+
+### Prerequisites (before starting)
+
+1. **P1b (VistA class-4 comma) lands** — the comma semantics need to be in the Dafny proofs
+2. **A `MCommand.dfy`** — the command dispatch semantics (D/G/K/W multi-arg loops, postconditionals) formalized
+3. **A "minimal conforming M" test definition** — which of the 139 corpus tests are ISO-required vs. vendor-specific
+
+### Open question
+
+Whether to write swiftm against the **Dafny proofs directly** (extract the spec as Swift protocol contracts) or against the **ISO standard document** (with Dafny as the cross-check). The former is more rigorous; the latter is more independent. Recommend: start with ISO, validate with Dafny — the divergence is the interesting part.
+
+---
+
 ## Done (historical — do not reopen)
 
 - **2026-10-26 fleet cleanup** — all 5 phases + follow-ups (PRs #47 #48)
@@ -162,4 +206,5 @@ All items **DONE** (published, README, CI green on u04, initial spec sync). Keep
 | Py/C3 | corpus freeze |
 | tsx / comdb2 | time-series plane, **PAUSED** |
 | fst / O'Kane / FreeM | frozen / adjunct |
+| swiftm | spec validation, **PROPOSED** (after P1b) |
 | m-semantics | spec + master docs home (PR-only main) |
