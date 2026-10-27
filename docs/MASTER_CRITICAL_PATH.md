@@ -1,11 +1,11 @@
 # Master critical path — all projects (unified)
 
-**Last updated:** 2026-10-27 · **Home:** `m-semantics/docs/MASTER_CRITICAL_PATH.md` · **≡** `~/CRITICAL_PATH.md`
+**Last updated:** 2026-10-27 (end of session) · **Home:** `m-semantics/docs/MASTER_CRITICAL_PATH.md` · **≡** `~/CRITICAL_PATH.md`
 **Detail docs:** JavaM `jvmumps/CRITICAL_PATH.md` · `jvmumps/docs/ROADMAP-0.5.0.md` · mjvm `mjvm/docs/` · inventory `m-semantics/docs/MASTER-INVENTORY.md`
 
 **Name lock:** **MeshGraph** = product · **`ydb-mesh`** = code · **JavaM** = `mjandrews1/JavaM` (JvMumps) · **mjvm** = `mjandrews1/mjvm` (JIT engine, now a separate repo) · **tsx** = Comdb2 time-series.
 
-**Focus (2026-10-27):** mjvm **v2.2.2** shipped · **U04 commissioned as fleet CI runner** (all 4 repos green on self-hosted CI) · **fleet posture hardened + edge containerized on U03** (fenced, key-only SSH, public 22 closed) · **MeshGraph RESUMED** — services up, public via the edge, scheduled updates + backup timers live, c3fst deprecated · remaining: portal rotation, U02 backup second copy.
+**Focus (end of 2026-10-27):** mjvm v2.2.2 shipped · U04 commissioned (CI runner, all 4 repos green on self-hosted) · fleet hardened (key-only SSH, UFW everywhere, public 22 closed, edge containerized + fenced on U03) · **MeshGraph RESUMED** (services + edge + daily updates + backup timers live) · **Dafny corpus 547 verified** (GraphStore + BM25 + Scan) · c3fst deprecated · remaining: portal rotation (user), U02 backup second copy, mjvm class-4 comma backlog.
 
 ## How to read
 
@@ -13,60 +13,60 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 
 ---
 
-## Project map (post-cleanup 2026-10-26)
+## Project map (end of 2026-10-27)
 
 | Project | Role | State | Stream |
 |---------|------|-------|--------|
-| **mjvm** | M → JVM JIT engine (v2.2.1, GAUNTLET 134/134) | active, Mac-only tree | **P1** |
-| **JavaM** (JvMumps) | full-M oracle + LineEngine (v1.2.0, 1.0 gate achieved; repo ARCHIVED) | active-local | **P2** |
-| **m-semantics** | Dafny spec (464 lemmas) + master docs | active | P2 |
+| **mjvm** | M → JVM JIT engine (v2.2.2, GAUNTLET 134/134, CI green on u04) | active, Mac-only tree | **P1** |
+| **JavaM** (JvMumps) | full-M oracle + LineEngine (v1.2.0, 1.0 gate; repo ARCHIVED) | active-local | **P2** |
+| **m-semantics** | Dafny spec (**547 lemmas**: 464 M-sem + 25 GraphStore + 42 BM25 + 16 Scan) + master docs | active | P2 |
+| **MeshGraph / ydb-mesh** | YottaDB citation index (41.2M articles, 2.8B postings; repo ARCHIVED) | **ACTIVE — resumed 2026-10-27** | **P5** |
 | **m-lsp** | language server | active, clean | P3 |
 | **mformatter** | M formatter | idle | P3 |
-| **tieredstore-rs** | Rust TieredStore prototype (published, CI green) | active | P4 |
+| **tieredstore-rs** | Rust TieredStore prototype (published, CI green on u04) | active | P4 |
 | **pymumps** | peer corpus host (restored on Mac) | active | P5 |
 | **fileman** | frozen VistA corpus | frozen | FROZEN |
-| **MeshGraph / ydb-mesh** | YottaDB citation index (41.2M articles, 2.8B postings) | **ACTIVE — resumed 2026-10-27** | P5 |
 | **tsx / comdb2** | time-series + SQL plane | **PAUSED** | FROZEN |
 | **RSM** | archived → `U02:coldstore/mac-rsm-2026-10-26/` | FROZEN | FROZEN |
 
 ---
 
-## Critical path (2026-10-26, post-P0–P5)
+## Critical path (end of 2026-10-27)
 
 ```
-  P0a Portal password rotation          (user — only remaining P0 item)
-  P1a mjvm compiler coverage 36.4% → 60% (peephole + error paths first)
-  P2a JavaM REPL                       (#35/#36 — both engines)
-  P2b JavaM rename hygiene + VistA     (#27, #34)
-  P4  Infra: U02 backup second copy    (U04 now provisioned — 828G free VG)
-  P5  MeshGraph follow-ups             (MARC author pass, MCP registry listings — see P6 section)
+  P0a Portal password rotation               (user)
+  P0b U02 meshgraph-backup second copy       (user decision: U04 LV? 5th host? accept risk?)
+
+  P1a mjvm compiler coverage 36.4% → 60%      (peephole + error paths first)
+  P1b mjvm VistA class-4: comma 17,057 (28.3%)  ← largest remaining backlog class
+  P2a JavaM REPL                             (#35/#36 — both engines)
+  P2b JavaM rename hygiene + VistA full run   (#27, #34)
+
+  P5a MeshGraph: post-heal phantom cleanup     (check catch-up result → clean PTERM)
+  P5b MeshGraph: first post-resume backup      (quiescent-copy after heal verified)
+  P5c MeshGraph: BM25 WAND pruning            (gated by proven PrunedScanYieldsTopK)
+  P5d MeshGraph: MCP registry listings        (ydb-mesh#28 — Smithery + official)
+  P5e MeshGraph: MARC author pass + updatefile retention (small)
 ```
 
 ---
 
-## P0 — Immediate (infra hygiene)
+## P0 — Immediate (user)
 
 | Work | Status | Note |
 |------|--------|------|
 | Rotate portal credential (`home.flamingyak.com`) | **OPEN** (user) | Scrubbed from skill files 2026-10-26; rotation itself outstanding |
-| U01 journal trim | **RESOLVED (no-op)** | Oct 17 WARN was stale — zero rotated `yottadb.mjl_*` remain; rotation cannot recur while the DB is quiescent. No cron added (dead weight while paused) |
-| U04 role decision + commissioning | **DONE — CI runner (2026-10-27)** | Late-2014 **Mac mini** hardware running Ubuntu 26.04 LTS — **i5-4278U, 2C/4T, 7.1G RAM, 1TB spinning HDD**. Hostname `utility-04`; Tailscale **100.79.52.105** (authed 2026-10-27); LAN fallback `192.168.0.32`. 4 per-repo GitHub Actions runners (`u04-mjvm/-m-lsp/-m-semantics/-tieredstore-rs`) online as systemd services; rsyslog → U03 verified; all 4 CI workflows flipped to `self-hosted` (m-lsp PR #16, m-semantics PR #55, both merged) |
-| U03 sshd hardening + fleet posture | **DONE (2026-10-27)** | U03 (public edge): `PasswordAuthentication no` via `/etc/ssh/sshd_config.d/40-disable-password.conf` — OpenSSH is first-match-wins, so `40-` beats cloud-init's `50-`; same fix on U04. U01/U02 already key-only (`99-harden.conf`). UFW active on all 4 hosts: default deny in / allow out, `allow in on tailscale0`, LAN 22 fallback; U03 additionally allows public 80/443 only. **Public 22 closed (2026-10-27 evening)** — SSH is now tailnet + LAN-only fleet-wide; external check confirms port 22 times out while 443 serves. Caddy + fail2ban run **only on U03 (edge)** — disabled on U01 (stale pre-Oct-20 edge config) and U02 (vestigial). U04 remote-log dir on U03 fixed to `syslog:adm 755`. Fleet `mark` password is standard — keep in the password manager, never in skill files |
-| jvmumps working tree | **DONE** | `BankScaleBench --cache` flag committed (954dff2) — **local-only**: JavaM repo is ARCHIVED on GitHub (read-only), so the commit cannot be pushed. Frozen-oracle policy applies |
+| U02 `meshgraph-backup` (222G) second copy | **OPEN** (user) | Top data risk. U04 has 828G free VG; decision pending |
 
 ## P1 — mjvm (primary dev)
 
 | Work | Status | Note |
 |------|--------|------|
-| GAUNTLET 134/134 · corpus 139/139 · CoreUnitTest 135/135 | **DONE** | Verified 2026-10-26, all suites on Mac |
-| Silent-recovery audit | **DONE — v2.2.1** | Found THREE silent depth returns (compile, compileInto, **compileForSpec** — the last silently dropped a 16th nested inline FOR's whole body, a real pre-existing bug). All now throw MError; swallowed lines logged + recorded in new `lastSwallowedErrors()` ledger; compileDepth balanced via try/finally (leaked on every compile error before). 2 new regression tests (32/32). Released as **v2.2.1** (v2.2.0 was already tagged Oct 25) |
-| Compiler coverage | **MEASURED, TARGET OPEN** | 36.4% lines (total project 79%, runtime 62.3% — the old "19%" CHANGELOG figure predates CoreUnitTest). 60% compiler target remains open work: peephole + error paths first |
-| Silent-recovery audit round 2 | **DONE — v2.2.2** | Four more sites fixed (unknown-command skip → throw; WRITE-sub swallow → propagate; `$GET`/`$DATA` catches narrowed to the undefined case). 32/32 regression, GAUNTLET 134/134, corpus 139/139 |
-| README perf-number consistency | **DONE** | Contradicting "13.5M txn/ms" removed; BankFull table is now the single source |
-| **VistA swallowed-syntax backlog** | **IN FLIGHT — classes 1-2 DONE, class 4 next** | Ledger protocol working: baseline 21,452 routines (63.2%) with swallowed lines / 223,453 entries; after class 1 (dotted stage 1, mjvm `bc23951` `9727848` — mid-line argless-D merger, space-dot levels, syn-body RET; plus a pre-existing compileInto patch-offset bug that made `F … D` + block silently no-op at runtime) and class 2 (SET targets, `d376761` — `S (A,B)=` lists evaluated once, quote-aware subscripts): **14,430 routines (42.5%), 60,225 entries (−73%)**. Remaining board: comma 17,057 (28.3%) → postcond 16,204 (26.9%) → @ 4,168 → dotted no-D heads 2,483 → $ 1,182 → SET residue 1,180 → tail 9,070. All suites green per class (regression 45/45, GAUNTLET 134/134, J0Smoke 139/139, CoreUnitTest 135/135). Detail + per-class numbers: `mjvm/docs/VISTA-SYNTAX-BACKLOG.md` |
-| Tag/release | **DONE** | v2.2.1, v2.2.2 tagged + pushed; GAUNTLET/corpus/core green post-change |
-| **AGENTS.md error policy** | **DONE — fleet-wide** | Adopted in all 8 repos 2026-10-26. Pushed: mjvm, mformatter, tieredstore-rs (direct), m-semantics (PR #51), m-lsp (PR #15). Local-only (repos archived): jvmumps, pymumps, fileman |
-| **mjvm CI fix (untracked jars + gates)** | **DONE (2026-10-27)** | GitHub CI had been **red since `9727848`** (local suites green, CI silently broken): `lib/` was gitignored but jars added later were never force-added — `archunit-1.3.0.jar` (`9ea0c2e`) and `jmh-core-1.37.jar` (`0d7eede`) now tracked. GAUNTLET latency gates are env-overridable (`GAUNTLET_{ARITH,STRING,GLOBAL,MIXED}_GATE_NS`, `01910f7`; defaults unchanged); CI sets Global=4000ns for u04's HDD. **GAUNTLET 134/134 green on u04** |
+| GAUNTLET 134/134 · corpus 139/139 · CoreUnitTest 135/135 | **DONE** | Verified on Mac + u04 CI (GAUNTLET green post-gate-tuning) |
+| Silent-recovery audits (rounds 1+2) | **DONE — v2.2.2** | 7 sites fixed, 45 regression tests, all suites green |
+| Compiler coverage | **MEASURED, TARGET OPEN** | 36.4% lines (total project 79%). 60% compiler target: peephole + error paths first |
+| **VistA swallowed-syntax backlog** | **IN FLIGHT — classes 1-2 DONE, class 4 (comma) next** | Baseline 21,452 routines (63.2%) → **14,430 (42.5%)** after classes 1-2. Remaining: comma **17,057 (28.3%)** → postcond 16,204 (26.9%) → @ 4,168 → dotted 2,483 → $ 1,182 → SET 1,180 → tail 9,070. Detail: `mjvm/docs/VISTA-SYNTAX-BACKLOG.md` |
+| CI fix (untracked jars + gates) | **DONE** | archunit + jmh-core jars tracked; GAUNTLET env-overridable gates; green on u04 |
 
 ## P2 — JavaM / m-semantics
 
@@ -77,75 +77,89 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | REPL both engines | JavaM#35 #36 | **OPEN** ← next attack |
 | Rename leftovers (docs/CI badges) | JavaM#27 | **OPEN** |
 | VistA full run under JavaM + mJVM | JavaM#34 | **OPEN** (last: 99.97%) |
-| Dafny deepening (547 verified: 464 M-semantics + 25 GraphStore + 42 BM25 + 16 Scan) | m-semantics | **DONE** this cycle · m-semantics pushes are PR-only (branch policy) |
-| **GraphStore.dfy** — MeshGraph store invariants | m-semantics | **DONE (2026-10-27)** — 25 lemmas, 0 errors: paired relation datatype, two-record model, count agreement, index integrity with phantom witness + repair lemma |
-| **BM25.dfy** — ranking + pruning | m-semantics | **DONE (2026-10-27)** — 42 lemmas, 0 errors: BM25 arithmetic (saturation, tf-monotone, length-norm), exact top-k scan, **WAND pruning soundness** (`PrunedScanYieldsTopK`), valid upper bounds (`SaturatedSumIsValidBound`) — the theorem gating the 10-40s BM25 performance fix |
-| **Scan.dfy** — capped scan | m-semantics | **DONE (2026-10-27)** — 16 lemmas, 0 errors: capped substring-walk semantics (prefix, size, truncated-iff, completeness) for the mesh_search pattern |
+| Dafny corpus: **547 verified** | m-semantics | **DONE this cycle** (M-semantics 464 + GraphStore 25 + BM25 42 + Scan 16) |
+
+### Dafny proof files (all 0 errors, Dafny 4.11, CI-verified)
+
+| File | Lemmas | Content |
+|---|---|---|
+| MSemantics.dfy + MPattern.dfy + MControl.dfy | 464 | M-language semantics (numeric scan, pattern match, control flow) |
+| **GraphStore.dfy** | 25 | MeshGraph edge invariants: paired relation datatype (orientation unrepresentable), `^GRAPH`/`^GRAPHREV` two-record model, count agreement, no-dangling, index integrity (`indexed ⇒ stored`) with phantom witness + repair lemma |
+| **BM25.dfy** | 42 | BM25 arithmetic (nonneg, saturation `≤ Idf·(k1+1)`, tf-monotone, length-norm, b=0 flatness), exact top-k scan, **WAND pruning soundness** (`PrunedScanYieldsTopK`), valid upper bounds (`SaturatedSumIsValidBound`) |
+| **Scan.dfy** | 16 | Capped substring-walk semantics: results are prefix of full match set, truncated iff limit exceeded, untruncated = complete |
+| TieredStore.dfy | existing | WAL/crash safety/eviction (unchanged this cycle) |
 
 ## P3 — m-lsp / mformatter
 
 | Work | Status | Note |
 |------|--------|------|
-| m-lsp | **CLEAN** at 5aa377d | Self-hosted CI merged (PR #16); runs on `u04-m-lsp` |
-| mformatter | **DONE** | `run_mformatter.sh` (parallel VistA corpus driver) committed + pushed (b04cc88) |
+| m-lsp | **CLEAN** at 5aa377d | Self-hosted CI on u04 (PR #16) |
+| mformatter | **DONE** | `run_mformatter.sh` committed + pushed (b04cc88) |
 
-## P4 — tieredstore-rs (new repo)
+## P4 — tieredstore-rs
 
-| Work | Status | Note |
-|------|--------|------|
-| Published github.com/mjandrews1/tieredstore-rs | **DONE** | Mirrored on U03 |
-| README | **DONE** | Architecture, module map, Dafny-lemma test table |
-| CI (build + clippy -D warnings + fmt + property tests) | **DONE** | First run green (36s); clippy warnings + formatting fixed pre-push |
-| Spec sync with `TieredStore.dfy` | **DONE (initial)** | 9 runtime property tests map to Dafny lemmas; keep tracking the spec |
+All items **DONE** (published, README, CI green on u04, initial spec sync). Keep tracking `TieredStore.dfy` as the spec evolves.
 
-## P5 — Infrastructure
+## P5 — MeshGraph (resumed 2026-10-27)
 
-| Work | Status | Note |
-|------|--------|------|
-| Fleet consolidation (archives → U02, dedup, mirrors) | **DONE** | 2026-10-26, all checksums verified — see MASTER-INVENTORY |
-| U03 mirror sync bug (frozen snapshots) | **DONE** | All 11 mirrors carry `+refs/heads/*:refs/heads/*`; verified live |
-| U03 mirror health visibility | **DONE** | `update_git_mirrors.sh` logs a timestamped `mirrors-synced: N repos` line per run; staleness detectable from `git-mirrors.log` |
-| Monitoring | **CONFIRMED PRESENT** | All four utility hosts + the `edge` container forward `*.*` to U03 via rsyslog TCP 514 (`60-forward-u03.conf`; container uses `imjournal`); U03 stores per-host under `/var/log/remote/{utility-01..04,edge}` (all `syslog:adm` readable). **Logrotate in place (2026-10-27)**: `/etc/logrotate.d/remote-syslog` on U03 (weekly, maxsize 100M, 12 kept, compress, HUP rsyslog postrotate — verified live) + caddy access-log rotation inside the edge container (copytruncate; fail2ban jail verified counting post-truncation) |
-| Edge containerization | **DONE (2026-10-27)** | Public web edge on U03 moved to LXD container `edge` (Caddy 2.11.7 + fail2ban caddy-auth jail; host Caddy disabled; router forwards unchanged — NAT proxy `192.168.0.31:80/443` → `10.58.25.10`). LE production cert issued through the new path; snapshot `baseline-2026-10-27`. **Containment (DMZ-equivalent) applied**: container is internet-egress-only — ufw route denies + nftables `edge_fence` (priority -10, preempts Tailscale's `ts-forward` blanket accept and ufw's allow-22); lateral probes to LAN/tailnet/host-sshd verified blocked. Details: `MASTER-INVENTORY.md` §9d |
-| U02 `meshgraph-backup` (222G) single copy | **OPEN** | Top data risk. Second copy → U04 (828G free VG — extend root LV or add a volume). Decision pending; U04's first role is CI |
-| U01 journal rotation while paused | **CLOSED** | No rotated journals exist; cannot recur without a writer. On resume: manual trim per runbook |
-| GitHub App connector | **NOTE** | Lacks repo-create + PR perms; use `gh` CLI on Mac (authed, works) |
+### Resume record
 
-## P6 — MeshGraph: RESUMED (2026-10-27)
+- **DB up on U01**: 222G `yottadb.dat` opened cleanly; corpus 41.2M articles / 2.8B postings. First catch-up run launched and completed 2026-10-27 (~1.2M update-era PMIDs loaded + indexed).
+- **Services (U01, systemd)**: `mesh-search` (:8081 BM25), `mesh-mcp` (:8082 JSON-RPC, new unit), `ydb-web-server` (:9080), `ydb-dashboard-metrics`/`ydb-dashboard-ui` (:9188/9187). All bind U01's tailscale IP via drop-ins.
+- **Public edge (U03 container `edge`)**: `/search*` → 8081, `/mcp*` → 8082, `/dashboard*` → 9188, `/ydb*` → 9080 on `home.flamingyak.com`; `mcp.flamingyak.com` vhost → 8082. Portal basicauth on `/ /ydb /ydb/*`; search/MCP/dashboard public. Fence + ufw scoped allows: container → `100.72.84.8:{8081,8082,9188,9080}` only.
+- **Scheduled updates (U01)**: daily 03:00 (fetch updatefiles → load missing → BM25/PTERM catch-up → completeness probe); Sun 04:30 (author pass over updatefiles). Scripts local-only (repo archived). Fail-loud guards: zero-PMID extraction ABORT, load-fail ABORT before indexing (phantom guard).
+- **Backup**: Sat 02:00 — quiescent-copy (refuses if writer active or journal growing); rsync to U02 via `.inprogress` + atomic rename; size-verify; previous kept as `.old`.
+- **Dashboard**: metrics service fixed (CWD drop-in); HTML name-matching extended for `ydb_`-prefixed gauges; wrapper extended (load 1/5/15, disk %/free/total); `/dashboard` canonicalized to trailing slash at the edge. 17/22 cards fill.
+- **c3fst**: entirely deprecated (mdbx purged, unit disabled, plan void).
 
-Owner decision: MeshGraph re-enabled; **c3fst is entirely deprecated** (mdbx already purged; `c3mcp.service` disabled; the 2026-09-25 coldstore-continuation plan is dead history).
+### Open MeshGraph items
 
-Resume record (2026-10-27):
+| # | Item | Priority | Effort |
+|---|---|---|---|
+| P5a | **Post-heal phantom cleanup** — check the catch-up run's `still_missing` count; if PTERM entries remain for PMIDs absent from `^PUBMED`, kill them + re-baseline `^PUBMEDSTAT` | high | < 1 hour |
+| P5b | **First post-resume backup** — the U02 backup is stale (writers resumed today). Run `meshgraph-backup.service` after P5a. | high | overnight (quiescent-copy) |
+| P5c | **BM25 WAND pruning** — implement `PrunedScanYieldsTopK` in `term_index.py` using per-term `Idf·(k1+1)` upper bounds. Proven sound; should bring 10-40s queries to interactive. | medium | session |
+| P5d | **MCP registry listings** (ydb-mesh#28) — Smithery + official MCP registry; URL + manifest already documented | medium | < 1 hour |
+| P5e | **MARC author pass** — catline/serline pass is manual; consider a monthly timer | low | small |
+| P5f | **Updatefile retention** — daily update re-scans full-year 363-file set; consider deleting consumed files > N days old | low | small |
 
-- **DB up on U01**: live `yottadb.dat` 222G opened cleanly (no journal recovery needed); smoke queries OK (MeSH `D000001` Calcimycin; PubMed deep into 36-37M PMIDs). Corpus was fully current through the pause (the Oct-13 missing list of 1,188,839 PMIDs exactly matches the final `CATCHUP DONE`).
-- **Services (systemd, U01)**: `mesh-search` (:8081 BM25 web), new `mesh-mcp` (:8082 JSON-RPC read-only MCP — unit created; no unit existed pre-pause), `ydb-web-server` (:9080), `ydb-dashboard-metrics`/`ydb-dashboard-ui` (:9188). Search/MCP/dashboard bind U01's tailscale IP via unit drop-ins (`100.72.84.8`).
-- **Public edge (U03 container `edge`)**: `/search*` → 8081, `/mcp*` → 8082, `/dashboard*` → 9188 on `home.flamingyak.com`; new `mcp.flamingyak.com` vhost → 8082 (own LE cert issued). Portal basicauth re-scoped to `/ /ydb /ydb/*` (search/MCP/dashboard public + read-only, parity with pre-pause). Fence: scoped allow `10.58.25.10 → 100.72.84.8:{8081,8082,9188}` before the tailnet deny (both nft fence and a ufw route rule — note `ufw route insert NUM RULE` syntax; plain `ufw insert N route ...` silently fails). Snapshots: `pre-meshgraph-2026-10-27` (before wiring) + `baseline-2026-10-27` (minimal edge). All endpoints verified through the public path.
-- **Scheduled updates (U01 systemd timers)**: `meshgraph-update` daily 03:00 UTC — fetch PubMed updatefiles (resumable, md5-verified) → load PMIDs missing from `^PUBMED` (`load_updates_missing.py`, skips present) → BM25/PTERM catch-up for docs lacking `^PTERMDLEN(pmid)` → completeness probe. `meshgraph-author` Sun 04:30 UTC — author pass over updatefiles. Scripts: `ydb-mesh/tools/daily-update.sh`, `tools/weekly-author.sh` (local-only — ydb-mesh repo is ARCHIVED). One-writer: flock `/run/lock/meshgraph-update.lock` + term_index-build guard. First catch-up run launched 2026-10-27 (17 days of updatefiles).
-- **Backup (quiescent-copy, fleet precedent)**: `meshgraph-backup` Sat 02:00 UTC — refuses to run while any writer is active or the journal is growing; rsync `.dat` + journals to `U02:coldstore/meshgraph-backup` via `.inprogress` + atomic rename; size-verify; previous kept as `meshgraph-backup.old`. First post-resume backup should run after the first catch-up completes.
-- **Known follow-ups**: MARC catline/serline author pass not scheduled (manual, post-update); MCP registry listings (Smithery/official registry, ydb-mesh#28) still TODO; `ydb-dashboard-ui.py` bind change is a local-only divergence (repo archived).
+## P6 — Infrastructure (all DONE this cycle)
+
+| Work | Status |
+|------|--------|
+| U04 commissioned (CI runner, all 4 repos green) | **DONE** |
+| Key-only SSH fleet-wide, public 22 closed | **DONE** |
+| UFW on all 4 hosts | **DONE** |
+| Edge containerized + fenced on U03 (DMZ-equivalent containment) | **DONE** |
+| Central logging (all 4 hosts + edge container → U03) | **DONE** |
+| Logrotate (collector + caddy access log) | **DONE** |
+| Mirror sync + health visibility | **DONE** |
+| Logrotate on U03 `/var/log/remote` | **DONE** |
 
 ---
 
 ## Done (historical — do not reopen)
 
-- **2026-10-26 fleet cleanup** — all 5 phases + follow-ups (PRs #47 #48); YDB backup currency proven; mirrors fixed fleet-wide
-- **2026-10-27 U04 commissioned** — fleet CI runner (Ubuntu 26.04, LAN `192.168.0.32`); 4 self-hosted GitHub Actions runners online; all 4 active repos' CI green on U04; mjvm CI red-streak (untracked jars since `9727848`) found + fixed
-- **2026-10-27 fleet posture hardened** — key-only SSH on all 4 hosts, UFW everywhere, Caddy+fail2ban consolidated on U03 (edge; brute-force bots now hit a wall), U04 on tailnet as `utility-04` (100.79.52.105)
-- **2026-10-27 edge containerized** — public web edge on U03 now the LXD container `edge` (snapshot `baseline-2026-10-27`); router forwards unchanged; central logging covers the container
-- **mjvm v2.2.0** correctness hardening — 10 bugs, 30 regression tests, Dafny 335→464
-- **JavaM v0.4.0 / v0.5.0 / v1.2.0** · perf review #97–#102 · concurrency audits #119–#123 · Cdb2 LOCK/TSTART #126
+- **2026-10-26 fleet cleanup** — all 5 phases + follow-ups (PRs #47 #48)
+- **2026-10-27 U04 commissioned** — fleet CI runner; mjvm CI red-streak (untracked jars) found + fixed
+- **2026-10-27 fleet posture hardened** — key-only SSH, UFW, Caddy+fail2ban edge-only, public 22 closed
+- **2026-10-27 edge containerized** — LXD container `edge`, fenced, snapshots, DMZ-equivalent containment
+- **2026-10-27 MeshGraph resumed** — services, edge, daily/weekly timers, backup timer, Dafny proofs (GraphStore + BM25 + Scan)
+- **2026-10-27 Dafny corpus 464 → 547** — GraphStore.dfy, BM25.dfy, Scan.dfy (PRs #67 #69 #70)
+- **mjvm v2.2.0 / v2.2.1 / v2.2.2** correctness hardening — 17 bugs total, 45+ regression tests
+- **JavaM v0.4.0 / v0.5.0 / v1.2.0** · perf review · concurrency audits · Cdb2 LOCK/TSTART
 - **MeshGraph** BM25 rebuild + author-pass + related_rev (pre-pause, all green)
 - **P ports** Py/C3/JavaM + mJVM native — corpus freeze
-- **U03 commissioned** (mirrors + DNS) 2026-10; LXC containers deleted 2026-10-26 (unused, verified empty)
+- **U03 commissioned** (mirrors + DNS) 2026-10
 
 ## Scope lock
 
 | Role | |
 |------|--|
 | mjvm + JavaM | primary development |
+| MeshGraph | data product, **ACTIVE** |
 | RSM | oracle only (archived) |
 | Py/C3 | corpus freeze |
-| MeshGraph | data product, **ACTIVE** (resumed 2026-10-27) |
 | tsx / comdb2 | time-series plane, **PAUSED** |
 | fst / O'Kane / FreeM | frozen / adjunct |
 | m-semantics | spec + master docs home (PR-only main) |
