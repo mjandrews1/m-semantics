@@ -32,3 +32,9 @@ jobs:
 
       - name: Verify GraphStore
         run: dafny verify GraphStore.dfy
+
+      - name: Verify BM25
+        run: dafny verify BM25.dfy
+
+      - name: Verify Scan
+        run: dafny verify Scan.dfy
