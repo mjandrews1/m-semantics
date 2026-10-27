@@ -102,7 +102,8 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | Fleet consolidation (archives → U02, dedup, mirrors) | **DONE** | 2026-10-26, all checksums verified — see MASTER-INVENTORY |
 | U03 mirror sync bug (frozen snapshots) | **DONE** | All 11 mirrors carry `+refs/heads/*:refs/heads/*`; verified live |
 | U03 mirror health visibility | **DONE** | `update_git_mirrors.sh` logs a timestamped `mirrors-synced: N repos` line per run; staleness detectable from `git-mirrors.log` |
-| Monitoring | **CONFIRMED PRESENT** | All four utility hosts forward `*.*` to U03 via rsyslog TCP 514 (`60-forward-u03.conf`); U03 stores per-host under `/var/log/remote/{utility-01..04}` (all `syslog:adm` readable as of 2026-10-27). No logrotate yet for `/var/log/remote` — add before it grows |
+| Monitoring | **CONFIRMED PRESENT** | All four utility hosts + the `edge` container forward `*.*` to U03 via rsyslog TCP 514 (`60-forward-u03.conf`; container uses `imjournal`); U03 stores per-host under `/var/log/remote/{utility-01..04,edge}` (all `syslog:adm` readable as of 2026-10-27). No logrotate yet for `/var/log/remote` — add before it grows |
+| Edge containerization | **DONE (2026-10-27)** | Public web edge on U03 moved to LXD container `edge` (Caddy 2.11.7 + fail2ban caddy-auth jail; host Caddy disabled; router forwards unchanged — NAT proxy `192.168.0.31:80/443` → `10.58.25.10`). LE production cert issued through the new path; snapshot `baseline-2026-10-27`. Details + rebuild recipe: `MASTER-INVENTORY.md` §9d |
 | U02 `meshgraph-backup` (222G) single copy | **OPEN** | Top data risk. Second copy → U04 (828G free VG — extend root LV or add a volume). Decision pending; U04's first role is CI |
 | U01 journal rotation while paused | **CLOSED** | No rotated journals exist; cannot recur without a writer. On resume: manual trim per runbook |
 | GitHub App connector | **NOTE** | Lacks repo-create + PR perms; use `gh` CLI on Mac (authed, works) |
@@ -123,6 +124,7 @@ The YottaDB family is paused by owner decision (2026-10-26). State preserved and
 - **2026-10-26 fleet cleanup** — all 5 phases + follow-ups (PRs #47 #48); YDB backup currency proven; mirrors fixed fleet-wide
 - **2026-10-27 U04 commissioned** — fleet CI runner (Ubuntu 26.04, LAN `192.168.0.32`); 4 self-hosted GitHub Actions runners online; all 4 active repos' CI green on U04; mjvm CI red-streak (untracked jars since `9727848`) found + fixed
 - **2026-10-27 fleet posture hardened** — key-only SSH on all 4 hosts, UFW everywhere, Caddy+fail2ban consolidated on U03 (edge; brute-force bots now hit a wall), U04 on tailnet as `utility-04` (100.79.52.105)
+- **2026-10-27 edge containerized** — public web edge on U03 now the LXD container `edge` (snapshot `baseline-2026-10-27`); router forwards unchanged; central logging covers the container
 - **mjvm v2.2.0** correctness hardening — 10 bugs, 30 regression tests, Dafny 335→464
 - **JavaM v0.4.0 / v0.5.0 / v1.2.0** · perf review #97–#102 · concurrency audits #119–#123 · Cdb2 LOCK/TSTART #126
 - **MeshGraph** BM25 rebuild + author-pass + related_rev (pre-pause, all green)
