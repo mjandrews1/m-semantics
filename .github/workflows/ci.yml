@@ -29,3 +29,6 @@ jobs:
 
       - name: Verify MControl
         run: dafny verify MControl.dfy
+
+      - name: Verify GraphStore
+        run: dafny verify GraphStore.dfy
