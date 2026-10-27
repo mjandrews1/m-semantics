@@ -39,7 +39,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
   P0b U02 meshgraph-backup second copy       (user decision: U04 LV? 5th host? accept risk?)
 
   P1a mjvm compiler coverage 36.4% → 60%      (peephole + error paths first)
-  P1b mjvm VistA class-4: comma 17,057 (28.3%)  ← largest remaining backlog class
+  P1b mjvm VistA class-3: postcond 9,896  ← next after comma; now the dominant class
   P2a JavaM REPL                             (#35/#36 — both engines)
   P2b JavaM rename hygiene + VistA full run   (#27, #34)
 
@@ -67,7 +67,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | GAUNTLET 134/134 · corpus 139/139 · CoreUnitTest 135/135 | **DONE** | Verified on Mac + u04 CI (GAUNTLET green post-gate-tuning) |
 | Silent-recovery audits (rounds 1+2) | **DONE — v2.2.2** | 7 sites fixed, 45 regression tests, all suites green |
 | Compiler coverage | **MEASURED, TARGET OPEN** | 36.4% lines (total project 79%). 60% compiler target: peephole + error paths first |
-| **VistA swallowed-syntax backlog** | **IN FLIGHT — classes 1-2 DONE, class 4 (comma) next** | Baseline 21,452 routines (63.2%) → **14,430 (42.5%)** after classes 1-2. Remaining: comma **17,057 (28.3%)** → postcond 16,204 (26.9%) → @ 4,168 → dotted 2,483 → $ 1,182 → SET 1,180 → tail 9,070. Detail: `mjvm/docs/VISTA-SYNTAX-BACKLOG.md` |
+| **VistA swallowed-syntax backlog** | **IN FLIGHT — classes 1-2-4 DONE, class 3 (postcond) next** | Baseline 21,452 routines (63.2%) → 14,430 (42.5%) after class 2 → **9,498 (28.0%)** after class 4. Comma class: 17,057 → 760 (**−96%**). Remaining: **postcond ~9,896 (next)** → @ ~5,649 → comma residue 760 → dotted ~2,483 → $ ~1,182 → SET ~1,180 → tail. Detail: `mjvm/docs/VISTA-SYNTAX-BACKLOG.md` |
 | CI fix (untracked jars + gates) | **DONE** | archunit + jmh-core jars tracked; GAUNTLET env-overridable gates; green on u04 |
 
 ## P2 — JavaM / m-semantics
