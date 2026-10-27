@@ -78,6 +78,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | Rename leftovers (docs/CI badges) | JavaM#27 | **OPEN** |
 | VistA full run under JavaM + mJVM | JavaM#34 | **OPEN** (last: 99.97%) |
 | Dafny deepening (464 verified) | m-semantics | **DONE** this cycle · m-semantics pushes are PR-only (branch policy) |
+| **GraphStore.dfy** — MeshGraph store invariants | m-semantics | **DONE (2026-10-27)** — 25 lemmas, 0 errors (Dafny 4.11): paired relation datatype (orientation ambiguity unrepresentable), ^GRAPH/^GRAPHREV two-record model with count agreement + even totals, no-dangling, corpus index integrity (`indexed ⇒ stored`) with the phantom-PTERM incident as violation witness + repair lemma. CI verifies it (PR #67) |
 
 ## P3 — m-lsp / mformatter
 
