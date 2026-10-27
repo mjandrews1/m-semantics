@@ -5,7 +5,7 @@
 
 **Name lock:** **MeshGraph** = product · **`ydb-mesh`** = code · **JavaM** = `mjandrews1/JavaM` (JvMumps) · **mjvm** = `mjandrews1/mjvm` (JIT engine, now a separate repo) · **tsx** = Comdb2 time-series.
 
-**Focus (2026-10-27):** mjvm **v2.2.2** shipped (silent-recovery rounds 1+2) · **U04 commissioned as fleet CI runner** — all 4 active repos on self-hosted CI, green · mjvm CI red-streak (untracked jars) fixed · **fleet posture hardened** (key-only SSH everywhere, UFW on all hosts, Caddy+fail2ban edge-only) · **YottaDB family PAUSED** · remaining: portal rotation, U02 backup second copy (U04 has capacity).
+**Focus (2026-10-27):** mjvm **v2.2.2** shipped · **U04 commissioned as fleet CI runner** (all 4 repos green on self-hosted CI) · **fleet posture hardened + edge containerized on U03** (fenced, key-only SSH, public 22 closed) · **MeshGraph RESUMED** — services up, public via the edge, scheduled updates + backup timers live, c3fst deprecated · remaining: portal rotation, U02 backup second copy.
 
 ## How to read
 
@@ -25,7 +25,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | **tieredstore-rs** | Rust TieredStore prototype (published, CI green) | active | P4 |
 | **pymumps** | peer corpus host (restored on Mac) | active | P5 |
 | **fileman** | frozen VistA corpus | frozen | FROZEN |
-| **MeshGraph / ydb-mesh** | YottaDB citation index | **PAUSED** | FROZEN |
+| **MeshGraph / ydb-mesh** | YottaDB citation index (41.2M articles, 2.8B postings) | **ACTIVE — resumed 2026-10-27** | P5 |
 | **tsx / comdb2** | time-series + SQL plane | **PAUSED** | FROZEN |
 | **RSM** | archived → `U02:coldstore/mac-rsm-2026-10-26/` | FROZEN | FROZEN |
 
@@ -39,7 +39,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
   P2a JavaM REPL                       (#35/#36 — both engines)
   P2b JavaM rename hygiene + VistA     (#27, #34)
   P4  Infra: U02 backup second copy    (U04 now provisioned — 828G free VG)
-  P5  Paused-family resume checklist   (documented below, do not act)
+  P5  MeshGraph follow-ups             (MARC author pass, MCP registry listings — see P6 section)
 ```
 
 ---
@@ -108,14 +108,18 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | U01 journal rotation while paused | **CLOSED** | No rotated journals exist; cannot recur without a writer. On resume: manual trim per runbook |
 | GitHub App connector | **NOTE** | Lacks repo-create + PR perms; use `gh` CLI on Mac (authed, works) |
 
-## P6 — Paused family: resume checklist (do NOT act while paused)
+## P6 — MeshGraph: RESUMED (2026-10-27)
 
-The YottaDB family is paused by owner decision (2026-10-26). State preserved and verified:
+Owner decision: MeshGraph re-enabled; **c3fst is entirely deprecated** (mdbx already purged; `c3mcp.service` disabled; the 2026-09-25 coldstore-continuation plan is dead history).
 
-- **U01 live DB**: YottaDB database (live `yottadb.dat` ~237G of U01's 243G usage) + 799M `~/db` tsx blobs; last journal write Oct 10; `~/_data` pipeline state + markers intact.
-- **U02 backup**: `coldstore/meshgraph-backup/yottadb.dat` 237G, Oct 16 vintage — **verified newer than last write**.
-- **Resume path**: (1) provision U04 as coldstore continuation (PIPELINE-PAUSED option 3), (2) restore from U02 backup, (3) resume author-chain/PubMed catch-up, (4) tsx: rebuild comdb2 from upstream (source trees deleted in cleanup — data intact).
-- **Do not**: reboot U01 mid-load, start a second YDB writer, or prune U01 `~/db` / `~/_data` while paused.
+Resume record (2026-10-27):
+
+- **DB up on U01**: live `yottadb.dat` 222G opened cleanly (no journal recovery needed); smoke queries OK (MeSH `D000001` Calcimycin; PubMed deep into 36-37M PMIDs). Corpus was fully current through the pause (the Oct-13 missing list of 1,188,839 PMIDs exactly matches the final `CATCHUP DONE`).
+- **Services (systemd, U01)**: `mesh-search` (:8081 BM25 web), new `mesh-mcp` (:8082 JSON-RPC read-only MCP — unit created; no unit existed pre-pause), `ydb-web-server` (:9080), `ydb-dashboard-metrics`/`ydb-dashboard-ui` (:9188). Search/MCP/dashboard bind U01's tailscale IP via unit drop-ins (`100.72.84.8`).
+- **Public edge (U03 container `edge`)**: `/search*` → 8081, `/mcp*` → 8082, `/dashboard*` → 9188 on `home.flamingyak.com`; new `mcp.flamingyak.com` vhost → 8082 (own LE cert issued). Portal basicauth re-scoped to `/ /ydb /ydb/*` (search/MCP/dashboard public + read-only, parity with pre-pause). Fence: scoped allow `10.58.25.10 → 100.72.84.8:{8081,8082,9188}` before the tailnet deny (both nft fence and a ufw route rule — note `ufw route insert NUM RULE` syntax; plain `ufw insert N route ...` silently fails). Snapshots: `pre-meshgraph-2026-10-27` (before wiring) + `baseline-2026-10-27` (minimal edge). All endpoints verified through the public path.
+- **Scheduled updates (U01 systemd timers)**: `meshgraph-update` daily 03:00 UTC — fetch PubMed updatefiles (resumable, md5-verified) → load PMIDs missing from `^PUBMED` (`load_updates_missing.py`, skips present) → BM25/PTERM catch-up for docs lacking `^PTERMDLEN(pmid)` → completeness probe. `meshgraph-author` Sun 04:30 UTC — author pass over updatefiles. Scripts: `ydb-mesh/tools/daily-update.sh`, `tools/weekly-author.sh` (local-only — ydb-mesh repo is ARCHIVED). One-writer: flock `/run/lock/meshgraph-update.lock` + term_index-build guard. First catch-up run launched 2026-10-27 (17 days of updatefiles).
+- **Backup (quiescent-copy, fleet precedent)**: `meshgraph-backup` Sat 02:00 UTC — refuses to run while any writer is active or the journal is growing; rsync `.dat` + journals to `U02:coldstore/meshgraph-backup` via `.inprogress` + atomic rename; size-verify; previous kept as `meshgraph-backup.old`. First post-resume backup should run after the first catch-up completes.
+- **Known follow-ups**: MARC catline/serline author pass not scheduled (manual, post-update); MCP registry listings (Smithery/official registry, ydb-mesh#28) still TODO; `ydb-dashboard-ui.py` bind change is a local-only divergence (repo archived).
 
 ---
 
@@ -138,6 +142,7 @@ The YottaDB family is paused by owner decision (2026-10-26). State preserved and
 | mjvm + JavaM | primary development |
 | RSM | oracle only (archived) |
 | Py/C3 | corpus freeze |
-| MeshGraph / tsx / comdb2 | data products, **PAUSED** |
+| MeshGraph | data product, **ACTIVE** (resumed 2026-10-27) |
+| tsx / comdb2 | time-series plane, **PAUSED** |
 | fst / O'Kane / FreeM | frozen / adjunct |
 | m-semantics | spec + master docs home (PR-only main) |
