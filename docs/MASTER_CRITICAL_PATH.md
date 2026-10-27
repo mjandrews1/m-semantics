@@ -51,7 +51,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 |------|--------|------|
 | Rotate portal credential (`home.flamingyak.com`) | **OPEN** (user) | Scrubbed from skill files 2026-10-26; rotation itself outstanding |
 | U01 journal trim | **RESOLVED (no-op)** | Oct 17 WARN was stale — zero rotated `yottadb.mjl_*` remain; rotation cannot recur while the DB is quiescent. No cron added (dead weight while paused) |
-| U04 role decision + commissioning | **DONE — CI runner (2026-10-27)** | Ubuntu 26.04 x86_64 — **2014 i5-4278U, 2C/4T, 7.1G RAM, 1TB spinning HDD** (not the MacMini previously assumed). LAN `192.168.0.32`; Tailscale installed, **auth pending (user)**. 4 per-repo GitHub Actions runners (`u04-mjvm/-m-lsp/-m-semantics/-tieredstore-rs`) online as systemd services; rsyslog → U03; all 4 CI workflows flipped to `self-hosted` (m-lsp PR #16, m-semantics PR #55, both merged) |
+| U04 role decision + commissioning | **DONE — CI runner (2026-10-27)** | Late-2014 **Mac mini** hardware running Ubuntu 26.04 LTS — **i5-4278U, 2C/4T, 7.1G RAM, 1TB spinning HDD**. LAN `192.168.0.32`; Tailscale installed, **auth pending (user)**. 4 per-repo GitHub Actions runners (`u04-mjvm/-m-lsp/-m-semantics/-tieredstore-rs`) online as systemd services; rsyslog → U03; all 4 CI workflows flipped to `self-hosted` (m-lsp PR #16, m-semantics PR #55, both merged) |
 | jvmumps working tree | **DONE** | `BankScaleBench --cache` flag committed (954dff2) — **local-only**: JavaM repo is ARCHIVED on GitHub (read-only), so the commit cannot be pushed. Frozen-oracle policy applies |
 
 ## P1 — mjvm (primary dev)
