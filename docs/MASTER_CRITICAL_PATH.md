@@ -77,8 +77,10 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | REPL both engines | JavaM#35 #36 | **OPEN** ← next attack |
 | Rename leftovers (docs/CI badges) | JavaM#27 | **OPEN** |
 | VistA full run under JavaM + mJVM | JavaM#34 | **OPEN** (last: 99.97%) |
-| Dafny deepening (464 verified) | m-semantics | **DONE** this cycle · m-semantics pushes are PR-only (branch policy) |
-| **GraphStore.dfy** — MeshGraph store invariants | m-semantics | **DONE (2026-10-27)** — 25 lemmas, 0 errors (Dafny 4.11): paired relation datatype (orientation ambiguity unrepresentable), ^GRAPH/^GRAPHREV two-record model with count agreement + even totals, no-dangling, corpus index integrity (`indexed ⇒ stored`) with the phantom-PTERM incident as violation witness + repair lemma. CI verifies it (PR #67) |
+| Dafny deepening (547 verified: 464 M-semantics + 25 GraphStore + 42 BM25 + 16 Scan) | m-semantics | **DONE** this cycle · m-semantics pushes are PR-only (branch policy) |
+| **GraphStore.dfy** — MeshGraph store invariants | m-semantics | **DONE (2026-10-27)** — 25 lemmas, 0 errors: paired relation datatype, two-record model, count agreement, index integrity with phantom witness + repair lemma |
+| **BM25.dfy** — ranking + pruning | m-semantics | **DONE (2026-10-27)** — 42 lemmas, 0 errors: BM25 arithmetic (saturation, tf-monotone, length-norm), exact top-k scan, **WAND pruning soundness** (`PrunedScanYieldsTopK`), valid upper bounds (`SaturatedSumIsValidBound`) — the theorem gating the 10-40s BM25 performance fix |
+| **Scan.dfy** — capped scan | m-semantics | **DONE (2026-10-27)** — 16 lemmas, 0 errors: capped substring-walk semantics (prefix, size, truncated-iff, completeness) for the mesh_search pattern |
 
 ## P3 — m-lsp / mformatter
 
