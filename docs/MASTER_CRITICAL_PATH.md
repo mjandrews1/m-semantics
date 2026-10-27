@@ -5,7 +5,7 @@
 
 **Name lock:** **MeshGraph** = product · **`ydb-mesh`** = code · **JavaM** = `mjandrews1/JavaM` (JvMumps) · **mjvm** = `mjandrews1/mjvm` (JIT engine, now a separate repo) · **tsx** = Comdb2 time-series.
 
-**Focus (2026-10-27):** mjvm **v2.2.2** shipped (silent-recovery rounds 1+2) · **U04 commissioned as fleet CI runner** — all 4 active repos on self-hosted CI, green · mjvm CI red-streak (untracked jars) fixed · **YottaDB family PAUSED** · remaining: portal rotation, Tailscale auth on U04, U02 backup second copy (U04 has capacity).
+**Focus (2026-10-27):** mjvm **v2.2.2** shipped (silent-recovery rounds 1+2) · **U04 commissioned as fleet CI runner** — all 4 active repos on self-hosted CI, green · mjvm CI red-streak (untracked jars) fixed · **fleet posture hardened** (key-only SSH everywhere, UFW on all hosts, Caddy+fail2ban edge-only) · **YottaDB family PAUSED** · remaining: portal rotation, U02 backup second copy (U04 has capacity).
 
 ## How to read
 
@@ -35,7 +35,6 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 
 ```
   P0a Portal password rotation          (user — only remaining P0 item)
-  P0d U03 sshd hardening                (PasswordAuthentication not explicitly disabled; public SSH under constant brute-force)
   P1a mjvm compiler coverage 36.4% → 60% (peephole + error paths first)
   P2a JavaM REPL                       (#35/#36 — both engines)
   P2b JavaM rename hygiene + VistA     (#27, #34)
@@ -52,7 +51,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | Rotate portal credential (`home.flamingyak.com`) | **OPEN** (user) | Scrubbed from skill files 2026-10-26; rotation itself outstanding |
 | U01 journal trim | **RESOLVED (no-op)** | Oct 17 WARN was stale — zero rotated `yottadb.mjl_*` remain; rotation cannot recur while the DB is quiescent. No cron added (dead weight while paused) |
 | U04 role decision + commissioning | **DONE — CI runner (2026-10-27)** | Late-2014 **Mac mini** hardware running Ubuntu 26.04 LTS — **i5-4278U, 2C/4T, 7.1G RAM, 1TB spinning HDD**. Hostname `utility-04`; Tailscale **100.79.52.105** (authed 2026-10-27); LAN fallback `192.168.0.32`. 4 per-repo GitHub Actions runners (`u04-mjvm/-m-lsp/-m-semantics/-tieredstore-rs`) online as systemd services; rsyslog → U03 verified; all 4 CI workflows flipped to `self-hosted` (m-lsp PR #16, m-semantics PR #55, both merged) |
-| U03 sshd hardening | **OPEN** | U03 is the fleet's public edge (router forwards 22/80/443). SSH under sustained botnet brute-force since 2026-10-20 (~16.8k attempts, fail2ban active with ~807 bans). sshd config left at Ubuntu defaults — `PasswordAuthentication` not explicitly `no` (U01 has it; U03 should match). Needs sudo on U03 |
+| U03 sshd hardening + fleet posture | **DONE (2026-10-27)** | U03 (public edge): `PasswordAuthentication no` via `/etc/ssh/sshd_config.d/40-disable-password.conf` — OpenSSH is first-match-wins, so `40-` beats cloud-init's `50-`; same fix on U04. U01/U02 already key-only (`99-harden.conf`). UFW active on all 4 hosts: default deny in / allow out, `allow in on tailscale0`, LAN 22 fallback; U03 additionally allows public 22/80/443 (key-only + fail2ban). Caddy + fail2ban now run **only on U03 (edge)** — disabled on U01 (stale pre-Oct-20 edge config; real portal = U03's placeholder, cert issued there Oct 20) and U02 (vestigial). U04 remote-log dir on U03 fixed to `syslog:adm 755` (was 0700, unreadable by `mark`). Fleet `mark` password is standard — keep in the password manager, never in skill files |
 | jvmumps working tree | **DONE** | `BankScaleBench --cache` flag committed (954dff2) — **local-only**: JavaM repo is ARCHIVED on GitHub (read-only), so the commit cannot be pushed. Frozen-oracle policy applies |
 
 ## P1 — mjvm (primary dev)
@@ -103,7 +102,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | Fleet consolidation (archives → U02, dedup, mirrors) | **DONE** | 2026-10-26, all checksums verified — see MASTER-INVENTORY |
 | U03 mirror sync bug (frozen snapshots) | **DONE** | All 11 mirrors carry `+refs/heads/*:refs/heads/*`; verified live |
 | U03 mirror health visibility | **DONE** | `update_git_mirrors.sh` logs a timestamped `mirrors-synced: N repos` line per run; staleness detectable from `git-mirrors.log` |
-| Monitoring | **CONFIRMED PRESENT** | U01 + U02 + U04 forward `*.*` to U03 via rsyslog TCP 514 (`60-forward-u03.conf`); U03 stores per-host under `/var/log/remote/{utility-01,02,03}`. Fleet-wide central logging exists — the earlier "no monitoring" claim was wrong |
+| Monitoring | **CONFIRMED PRESENT** | All four utility hosts forward `*.*` to U03 via rsyslog TCP 514 (`60-forward-u03.conf`); U03 stores per-host under `/var/log/remote/{utility-01..04}` (all `syslog:adm` readable as of 2026-10-27). No logrotate yet for `/var/log/remote` — add before it grows |
 | U02 `meshgraph-backup` (222G) single copy | **OPEN** | Top data risk. Second copy → U04 (828G free VG — extend root LV or add a volume). Decision pending; U04's first role is CI |
 | U01 journal rotation while paused | **CLOSED** | No rotated journals exist; cannot recur without a writer. On resume: manual trim per runbook |
 | GitHub App connector | **NOTE** | Lacks repo-create + PR perms; use `gh` CLI on Mac (authed, works) |
@@ -123,6 +122,7 @@ The YottaDB family is paused by owner decision (2026-10-26). State preserved and
 
 - **2026-10-26 fleet cleanup** — all 5 phases + follow-ups (PRs #47 #48); YDB backup currency proven; mirrors fixed fleet-wide
 - **2026-10-27 U04 commissioned** — fleet CI runner (Ubuntu 26.04, LAN `192.168.0.32`); 4 self-hosted GitHub Actions runners online; all 4 active repos' CI green on U04; mjvm CI red-streak (untracked jars since `9727848`) found + fixed
+- **2026-10-27 fleet posture hardened** — key-only SSH on all 4 hosts, UFW everywhere, Caddy+fail2ban consolidated on U03 (edge; brute-force bots now hit a wall), U04 on tailnet as `utility-04` (100.79.52.105)
 - **mjvm v2.2.0** correctness hardening — 10 bugs, 30 regression tests, Dafny 335→464
 - **JavaM v0.4.0 / v0.5.0 / v1.2.0** · perf review #97–#102 · concurrency audits #119–#123 · Cdb2 LOCK/TSTART #126
 - **MeshGraph** BM25 rebuild + author-pass + related_rev (pre-pause, all green)
