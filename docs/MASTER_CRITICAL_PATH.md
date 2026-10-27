@@ -1,11 +1,11 @@
 # Master critical path — all projects (unified)
 
-**Last updated:** 2026-10-26 · **Home:** `m-semantics/docs/MASTER_CRITICAL_PATH.md` · **≡** `~/CRITICAL_PATH.md`
+**Last updated:** 2026-10-27 · **Home:** `m-semantics/docs/MASTER_CRITICAL_PATH.md` · **≡** `~/CRITICAL_PATH.md`
 **Detail docs:** JavaM `jvmumps/CRITICAL_PATH.md` · `jvmumps/docs/ROADMAP-0.5.0.md` · mjvm `mjvm/docs/` · inventory `m-semantics/docs/MASTER-INVENTORY.md`
 
 **Name lock:** **MeshGraph** = product · **`ydb-mesh`** = code · **JavaM** = `mjandrews1/JavaM` (JvMumps) · **mjvm** = `mjandrews1/mjvm` (JIT engine, now a separate repo) · **tsx** = Comdb2 time-series.
 
-**Focus (2026-10-26):** mjvm **v2.2.2** shipped (silent-recovery rounds 1+2) · **VistA ledger: 63% of corpus had silently-swallowed lines** → new syntax backlog · AGENTS.md error policy adopted fleet-wide · **YottaDB family PAUSED** · remaining: portal rotation, U04 role.
+**Focus (2026-10-27):** mjvm **v2.2.2** shipped (silent-recovery rounds 1+2) · **U04 commissioned as fleet CI runner** — all 4 active repos on self-hosted CI, green · mjvm CI red-streak (untracked jars) fixed · **YottaDB family PAUSED** · remaining: portal rotation, Tailscale auth on U04, U02 backup second copy (U04 has capacity).
 
 ## How to read
 
@@ -35,11 +35,11 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 
 ```
   P0a Portal password rotation          (user — only remaining P0 item)
-  P0b U04 role decision                (user)
+  P0c Tailscale auth on U04             (user — URL held on U04 console)
   P1a mjvm compiler coverage 36.4% → 60% (peephole + error paths first)
   P2a JavaM REPL                       (#35/#36 — both engines)
   P2b JavaM rename hygiene + VistA     (#27, #34)
-  P4  Infra: U02 backup second copy    (awaiting U04 provisioning)
+  P4  Infra: U02 backup second copy    (U04 now provisioned — 828G free VG)
   P5  Paused-family resume checklist   (documented below, do not act)
 ```
 
@@ -51,7 +51,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 |------|--------|------|
 | Rotate portal credential (`home.flamingyak.com`) | **OPEN** (user) | Scrubbed from skill files 2026-10-26; rotation itself outstanding |
 | U01 journal trim | **RESOLVED (no-op)** | Oct 17 WARN was stale — zero rotated `yottadb.mjl_*` remain; rotation cannot recur while the DB is quiescent. No cron added (dead weight while paused) |
-| U04 role decision | **OPEN** (user) | 1TB MacMini. Candidates: second copy of U02's 222G `meshgraph-backup` (single-copy risk) · PubMed coldstore continuation if YDB resumes (PIPELINE-PAUSED option 3) · CI runner |
+| U04 role decision + commissioning | **DONE — CI runner (2026-10-27)** | Ubuntu 26.04 x86_64 — **2014 i5-4278U, 2C/4T, 7.1G RAM, 1TB spinning HDD** (not the MacMini previously assumed). LAN `192.168.0.32`; Tailscale installed, **auth pending (user)**. 4 per-repo GitHub Actions runners (`u04-mjvm/-m-lsp/-m-semantics/-tieredstore-rs`) online as systemd services; rsyslog → U03; all 4 CI workflows flipped to `self-hosted` (m-lsp PR #16, m-semantics PR #55, both merged) |
 | jvmumps working tree | **DONE** | `BankScaleBench --cache` flag committed (954dff2) — **local-only**: JavaM repo is ARCHIVED on GitHub (read-only), so the commit cannot be pushed. Frozen-oracle policy applies |
 
 ## P1 — mjvm (primary dev)
@@ -66,6 +66,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | **VistA swallowed-syntax backlog** | **IN FLIGHT — classes 1-2 DONE, class 4 next** | Ledger protocol working: baseline 21,452 routines (63.2%) with swallowed lines / 223,453 entries; after class 1 (dotted stage 1, mjvm `bc23951` `9727848` — mid-line argless-D merger, space-dot levels, syn-body RET; plus a pre-existing compileInto patch-offset bug that made `F … D` + block silently no-op at runtime) and class 2 (SET targets, `d376761` — `S (A,B)=` lists evaluated once, quote-aware subscripts): **14,430 routines (42.5%), 60,225 entries (−73%)**. Remaining board: comma 17,057 (28.3%) → postcond 16,204 (26.9%) → @ 4,168 → dotted no-D heads 2,483 → $ 1,182 → SET residue 1,180 → tail 9,070. All suites green per class (regression 45/45, GAUNTLET 134/134, J0Smoke 139/139, CoreUnitTest 135/135). Detail + per-class numbers: `mjvm/docs/VISTA-SYNTAX-BACKLOG.md` |
 | Tag/release | **DONE** | v2.2.1, v2.2.2 tagged + pushed; GAUNTLET/corpus/core green post-change |
 | **AGENTS.md error policy** | **DONE — fleet-wide** | Adopted in all 8 repos 2026-10-26. Pushed: mjvm, mformatter, tieredstore-rs (direct), m-semantics (PR #51), m-lsp (PR #15). Local-only (repos archived): jvmumps, pymumps, fileman |
+| **mjvm CI fix (untracked jars + gates)** | **DONE (2026-10-27)** | GitHub CI had been **red since `9727848`** (local suites green, CI silently broken): `lib/` was gitignored but jars added later were never force-added — `archunit-1.3.0.jar` (`9ea0c2e`) and `jmh-core-1.37.jar` (`0d7eede`) now tracked. GAUNTLET latency gates are env-overridable (`GAUNTLET_{ARITH,STRING,GLOBAL,MIXED}_GATE_NS`, `01910f7`; defaults unchanged); CI sets Global=4000ns for u04's HDD. **GAUNTLET 134/134 green on u04** |
 
 ## P2 — JavaM / m-semantics
 
@@ -82,7 +83,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 
 | Work | Status | Note |
 |------|--------|------|
-| m-lsp | **CLEAN** at c9ba9dd | No open work identified |
+| m-lsp | **CLEAN** at 5aa377d | Self-hosted CI merged (PR #16); runs on `u04-m-lsp` |
 | mformatter | **DONE** | `run_mformatter.sh` (parallel VistA corpus driver) committed + pushed (b04cc88) |
 
 ## P4 — tieredstore-rs (new repo)
@@ -101,8 +102,8 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | Fleet consolidation (archives → U02, dedup, mirrors) | **DONE** | 2026-10-26, all checksums verified — see MASTER-INVENTORY |
 | U03 mirror sync bug (frozen snapshots) | **DONE** | All 11 mirrors carry `+refs/heads/*:refs/heads/*`; verified live |
 | U03 mirror health visibility | **DONE** | `update_git_mirrors.sh` logs a timestamped `mirrors-synced: N repos` line per run; staleness detectable from `git-mirrors.log` |
-| Monitoring | **CONFIRMED PRESENT** | U01 + U02 forward `*.*` to U03 via rsyslog TCP 514 (`60-forward-u03.conf`); U03 stores per-host under `/var/log/remote/{utility-01,02,03}`. Fleet-wide central logging exists — the earlier "no monitoring" claim was wrong |
-| U02 `meshgraph-backup` (222G) single copy | **OPEN** | Top data risk. Second copy → U04 when provisioned |
+| Monitoring | **CONFIRMED PRESENT** | U01 + U02 + U04 forward `*.*` to U03 via rsyslog TCP 514 (`60-forward-u03.conf`); U03 stores per-host under `/var/log/remote/{utility-01,02,03}`. Fleet-wide central logging exists — the earlier "no monitoring" claim was wrong |
+| U02 `meshgraph-backup` (222G) single copy | **OPEN** | Top data risk. Second copy → U04 (828G free VG — extend root LV or add a volume). Decision pending; U04's first role is CI |
 | U01 journal rotation while paused | **CLOSED** | No rotated journals exist; cannot recur without a writer. On resume: manual trim per runbook |
 | GitHub App connector | **NOTE** | Lacks repo-create + PR perms; use `gh` CLI on Mac (authed, works) |
 
@@ -120,6 +121,7 @@ The YottaDB family is paused by owner decision (2026-10-26). State preserved and
 ## Done (historical — do not reopen)
 
 - **2026-10-26 fleet cleanup** — all 5 phases + follow-ups (PRs #47 #48); YDB backup currency proven; mirrors fixed fleet-wide
+- **2026-10-27 U04 commissioned** — fleet CI runner (Ubuntu 26.04, LAN `192.168.0.32`); 4 self-hosted GitHub Actions runners online; all 4 active repos' CI green on U04; mjvm CI red-streak (untracked jars since `9727848`) found + fixed
 - **mjvm v2.2.0** correctness hardening — 10 bugs, 30 regression tests, Dafny 335→464
 - **JavaM v0.4.0 / v0.5.0 / v1.2.0** · perf review #97–#102 · concurrency audits #119–#123 · Cdb2 LOCK/TSTART #126
 - **MeshGraph** BM25 rebuild + author-pass + related_rev (pre-pause, all green)
