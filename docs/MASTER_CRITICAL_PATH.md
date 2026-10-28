@@ -1,11 +1,11 @@
 # Master critical path — all projects (unified)
 
-**Last updated:** 2026-10-27 (end of session) · **Home:** `m-semantics/docs/MASTER_CRITICAL_PATH.md` · **≡** `~/CRITICAL_PATH.md`
+**Last updated:** 2026-10-28 (post-resume heal session) · **Home:** `m-semantics/docs/MASTER_CRITICAL_PATH.md` · **≡** `~/CRITICAL_PATH.md`
 **Detail docs:** JavaM `jvmumps/CRITICAL_PATH.md` · `jvmumps/docs/ROADMAP-0.5.0.md` · mjvm `mjvm/docs/` · inventory `m-semantics/docs/MASTER-INVENTORY.md`
 
-**Name lock:** **MeshGraph** = product · **`ydb-mesh`** = code · **JavaM** = `mjandrews1/JavaM` (JvMumps) · **mjvm** = `mjandrews1/mjvm` (JIT engine, now a separate repo) · **tsx** = Comdb2 time-series.
+**Name lock:** **MeshGraph** = product · **`ydb-mesh`** = code · **JavaM** = `mjandrews1/JavaM` (JvMumps) — **FROZEN oracle**; parser/lexer (and REPL) moved to mjvm, one codebase, one dev path going forward · **mjvm** = `mjandrews1/mjvm` (JIT engine) · **tsx** = Comdb2 time-series.
 
-**Focus (end of 2026-10-27):** mjvm v2.2.2 shipped · U04 commissioned (CI runner, all 4 repos green on self-hosted) · fleet hardened (key-only SSH, UFW everywhere, public 22 closed, edge containerized + fenced on U03) · **MeshGraph RESUMED** (services + edge + daily updates + backup timers live) · **Dafny corpus 547 verified** (GraphStore + BM25 + Scan) · **swiftm (spec-first M in Swift) PROPOSED** as P7 · c3fst deprecated · remaining: portal rotation (user), U02 backup second copy, mjvm class-4 comma backlog.
+**Focus (end of 2026-10-28):** mjvm v2.2.2 shipped (P1b comma work in flight) · fleet hardened (key-only SSH, UFW everywhere, public 22 closed, edge containerized + fenced) · MeshGraph RESUMED + **post-resume heal DONE 2026-10-28** (retention semantics verified — NO phantom kill; dead PTERM guard fixed; 142,763 docs indexed; dangling cleared; WAND pruning live; updatefile retention live; first post-resume backup run) · **ydb-mesh repo reactivated** (PR #49: ops files + registry package + live tree) · Dafny corpus 547 verified · **JavaM REPL (#35/#36) verified DONE** — CI smoke restored to mjvm (c8ada1a) · **P8 M ecosystem survey cloned** (`~/m-ecosystem/`, 34 artifacts incl. GT.M V7.2-001) · **P9 GT.M instance RUNNING on U01:8181** · c3fst deprecated · remaining: portal rotation (user), U02 backup second copy (user), U01 journaling re-enable, mjvm comma backlog.
 
 ## How to read
 
@@ -13,14 +13,14 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 
 ---
 
-## Project map (end of 2026-10-27)
+## Project map (end of 2026-10-28)
 
 | Project | Role | State | Stream |
 |---------|------|-------|--------|
 | **mjvm** | M → JVM JIT engine (v2.2.2, GAUNTLET 134/134, CI green on u04) | active, Mac-only tree | **P1** |
-| **JavaM** (JvMumps) | full-M oracle + LineEngine (v1.2.0, 1.0 gate; repo ARCHIVED) | active-local | **P2** |
+| **JavaM** (JvMumps) | full-M oracle (v1.2.0, 1.0 gate) — **FROZEN**; parser/lexer + REPL live in mjvm; one codebase, one dev path | frozen, local reference | P2 |
 | **m-semantics** | Dafny spec (**547 lemmas**: 464 M-sem + 25 GraphStore + 42 BM25 + 16 Scan) + master docs | active | P2 |
-| **MeshGraph / ydb-mesh** | YottaDB citation index (41.2M articles, 2.8B postings; repo ARCHIVED) | **ACTIVE — resumed 2026-10-27** | **P5** |
+| **MeshGraph / ydb-mesh** | YottaDB citation index (44.4M corpus, 42.5M indexed docs, 7.0B postings; repo **ACTIVE — unarchived + upstreamed 2026-10-28**, PR #49) | **ACTIVE — resumed 2026-10-27, post-resume heal 2026-10-28** | **P5** |
 | **m-lsp** | language server | active, clean | P3 |
 | **mformatter** | M formatter | idle | P3 |
 | **swiftm** (proposed) | spec-first M in Swift — validates Dafny proofs against an independent implementation; native Apple Silicon; actor-based JOB/LOCK | **PROPOSED** — after P1/P2 stabilize | **P7** |
@@ -32,33 +32,33 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 
 ---
 
-## Critical path (end of 2026-10-27)
+## Critical path (end of 2026-10-28)
 
 ```
   P0a Portal password rotation               (user)
   P0b U02 meshgraph-backup second copy       (user decision: U04 LV? 5th host? accept risk?)
+  P0c U01 YDB journaling re-enable           (OFF since Oct 10; post-resume writes unjournaled)
 
   P1a mjvm compiler coverage 36.4% → 60%      (peephole + error paths first)
-  P1b mjvm VistA class-3: postcond 9,896  ← next after comma; now the dominant class
-  P2a JavaM REPL                             (#35/#36 — both engines)
+  P1b mjvm VistA class-4: comma 17,057 (28.3%)  ← largest remaining backlog class
   P2b JavaM rename hygiene + VistA full run   (#27, #34)
 
-  P5a MeshGraph: post-heal phantom cleanup     (check catch-up result → clean PTERM)
-  P5b MeshGraph: first post-resume backup      (quiescent-copy after heal verified)
-  P5c MeshGraph: BM25 WAND pruning            (gated by proven PrunedScanYieldsTopK)
-  P5d MeshGraph: MCP registry listings        (ydb-mesh#28 — Smithery + official)
-  P5e MeshGraph: MARC author pass + updatefile retention (small)
+  P5d MeshGraph: MCP registry listings        (ydb-mesh#28 — prep done, publish after restart)
+  P5e MeshGraph: MARC author pass timer      (catline/serline pass is manual)
   P7  swiftm: spec-first M in Swift            (after P1b lands; validates Dafny)
+  P8  M ecosystem survey — follow-ups          (SF mumps release; YDBTest cross-engine runs)
+  P9  GT.M instance (U01)                      (running on 8181; persistence + hardening)
 ```
 
 ---
 
-## P0 — Immediate (user)
+## P0 — Immediate
 
 | Work | Status | Note |
 |------|--------|------|
 | Rotate portal credential (`home.flamingyak.com`) | **OPEN** (user) | Scrubbed from skill files 2026-10-26; rotation itself outstanding |
-| U02 `meshgraph-backup` (222G) second copy | **OPEN** (user) | Top data risk. U04 has 828G free VG; decision pending |
+| U02 `meshgraph-backup` second copy | **OPEN** (user) | Top data risk. U04 has 828G free VG; decision pending |
+| U01 YDB journaling re-enable | **OPEN** | `Journal State: OFF` since Oct 10 (pre-freeze; never re-enabled at resume) — every post-resume write (incl. the 2026-10-27/28 catch-up + heal) went straight to the .dat. Enable after the post-heal backup is verified on U02, ideally while quiesced |
 
 ## P1 — mjvm (primary dev)
 
@@ -67,7 +67,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | GAUNTLET 134/134 · corpus 139/139 · CoreUnitTest 135/135 | **DONE** | Verified on Mac + u04 CI (GAUNTLET green post-gate-tuning) |
 | Silent-recovery audits (rounds 1+2) | **DONE — v2.2.2** | 7 sites fixed, 45 regression tests, all suites green |
 | Compiler coverage | **MEASURED, TARGET OPEN** | 36.4% lines (total project 79%). 60% compiler target: peephole + error paths first |
-| **VistA swallowed-syntax backlog** | **IN FLIGHT — classes 1-2-4 DONE, class 3 (postcond) next** | Baseline 21,452 routines (63.2%) → 14,430 (42.5%) after class 2 → **9,498 (28.0%)** after class 4. Comma class: 17,057 → 760 (**−96%**). Remaining: **postcond ~9,896 (next)** → @ ~5,649 → comma residue 760 → dotted ~2,483 → $ ~1,182 → SET ~1,180 → tail. Detail: `mjvm/docs/VISTA-SYNTAX-BACKLOG.md` |
+| **VistA swallowed-syntax backlog** | **IN FLIGHT — classes 1-2 DONE, class 4 (comma) next** | Baseline 21,452 routines (63.2%) → **14,430 (42.5%)** after classes 1-2. Remaining: comma **17,057 (28.3%)** → postcond 16,204 (26.9%) → @ 4,168 → dotted 2,483 → $ 1,182 → SET 1,180 → tail 9,070. Detail: `mjvm/docs/VISTA-SYNTAX-BACKLOG.md` |
 | CI fix (untracked jars + gates) | **DONE** | archunit + jmh-core jars tracked; GAUNTLET env-overridable gates; green on u04 |
 
 ## P2 — JavaM / m-semantics
@@ -76,7 +76,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 |------|--------|--------|
 | 1.0 gate (FileMan Tier A/B/C, 135/4/0) | JavaM#32 #25 #26 | **DONE** (2026-10-17) |
 | v1.2.0 release | — | **DONE** |
-| REPL both engines | JavaM#35 #36 | **OPEN** ← next attack |
+| REPL both engines | JavaM#35 #36 | **DONE — closed at v0.9.0** (13ca164 + 210852e, jvmumps repo). Path was stale; verified live 2026-10-28: both shells (`jvmumps.Repl`, `mjvm.cli.Repl`) pass the scripted session against the mjvm build; the CI smoke lost in the mjvm split restored in `gauntlet.yml` (c8ada1a) |
 | Rename leftovers (docs/CI badges) | JavaM#27 | **OPEN** |
 | VistA full run under JavaM + mJVM | JavaM#34 | **OPEN** (last: 99.97%) |
 | Dafny corpus: **547 verified** | m-semantics | **DONE this cycle** (M-semantics 464 + GraphStore 25 + BM25 42 + Scan 16) |
@@ -114,16 +114,18 @@ All items **DONE** (published, README, CI green on u04, initial spec sync). Keep
 - **Dashboard**: metrics service fixed (CWD drop-in); HTML name-matching extended for `ydb_`-prefixed gauges; wrapper extended (load 1/5/15, disk %/free/total); `/dashboard` canonicalized to trailing slash at the edge. 17/22 cards fill.
 - **c3fst**: entirely deprecated (mdbx purged, unit disabled, plan void).
 
-### Open MeshGraph items
+### Post-resume heal (2026-10-28) — P5a/P5b/P5c/P5f DONE
 
-| # | Item | Priority | Effort |
+**The headline finding: the 32.8M "phantom" PTERM entries are the retention design, not the historical bug — the planned phantom kill was cancelled.** A retention pass on 2026-10-17 (`tools/archive_mesh.py`, RETENTION.md) exported 33,458,179 `^PUBMED` articles below PMID 35,000,000 (389.5M nodes) to `U02:coldstore/meshgraph/pubmed-2026-10-17.csv.gz` (12.4G + a titles-only 1.2G export, manifest.json) and KILLed them from the live DB to shrink it. The PTERM index deliberately still covers the full corpus. Live store after the heal: **8,489,142 articles** (7,429,111 with abstracts); index: **42,514,186 docs / 7.0B postings**. Search over old literature returns PMIDs with empty titles by design (articles restorable from the coldstore export).
+
+| # | Item | Status | Result |
 |---|---|---|---|
-| P5a | **Post-heal phantom cleanup** — check the catch-up run's `still_missing` count; if PTERM entries remain for PMIDs absent from `^PUBMED`, kill them + re-baseline `^PUBMEDSTAT` | high | < 1 hour |
-| P5b | **First post-resume backup** — the U02 backup is stale (writers resumed today). Run `meshgraph-backup.service` after P5a. | high | overnight (quiescent-copy) |
-| P5c | **BM25 WAND pruning** — implement `PrunedScanYieldsTopK` in `term_index.py` using per-term `Idf·(k1+1)` upper bounds. Proven sound; should bring 10-40s queries to interactive. | medium | session |
-| P5d | **MCP registry listings** (ydb-mesh#28) — Smithery + official MCP registry; URL + manifest already documented | medium | < 1 hour |
-| P5e | **MARC author pass** — catline/serline pass is manual; consider a monthly timer | low | small |
-| P5f | **Updatefile retention** — daily update re-scans full-year 363-file set; consider deleting consumed files > N days old | low | small |
+| P5a | Post-heal phantom cleanup | **DONE — scope revised** | NO phantom kill (they are the corpus). Real findings fixed instead: (1) the daily-update PTERM catch-up guard was **dead** — `yottadb.data("PUBMED", …)` without the `^` caret silently returns 0, so every run reported "nothing loaded-but-unindexed" (only the caret form resolves in ydbpython); fixed + verified. (2) **142,763 docs were loaded-but-unindexed** (all title-bearing, newest PMIDs) — indexed via `term_index build`; `^PTERMSTAT docs 42,371,423 → 42,514,186`. (3) The 268 "dangling" refs are **4 MeSH SCR UIs** (C+9 digits — supplementary concepts, absent from the desc2026-only `^MESH` by design); loader now excludes SCR from the dangling counter, stat re-baselined to 0, probe prints `COMPLETENESS OK` |
+| P5b | First post-resume backup | **DONE 2026-10-28** | Quiescent-copy run after the heal; size-verified swap on U02, previous kept as `.old` (numbers in inventory §9f) |
+| P5c | BM25 WAND pruning | **DONE** | `bm25_search_wand` in `term_index.py` implements `PrunedScanYieldsTopK` (per-term `Idf·(k1+1)` saturated bounds; `bm25_search` delegates, old scan kept as parity oracle via `--scan`). A/B parity 6/6 exact (max diff 2.8e-14, float order only). Latency: multi-term queries **13–33s → 0.2–3.5s**. Two A/B-caught bugs fixed: int-subscript seeks silently swallowed as list-exhaustion; advance-to-pivot must be an inclusive `nextGE` ($ORDER is exclusive) or docs lose contributions. Phrase df capped at 20001 (parity with the scan path) + cached in new `^PTERMPHRASEDF` |
+| P5f | Updatefile retention | **DONE** | `daily-update.sh` step 6: after a fully successful run, delete `pubmed*.xml.gz` + `.md5` older than `MESH_RETENTION_DAYS` (default 14, `0`/garbage disables). Safety: every abort path exits before it, so deleted files are provably consumed. Unit-tested; current 363-file/20G set first prunes ~Nov 11 |
+| P5d | MCP registry listings (ydb-mesh#28) | **PREP DONE 2026-10-28 — publish pending** | Package tracked in `ydb-mesh/registry/` (PR #49): README (identity + tool schemas verified against source, client snippet, submission checklist), `official-registry.json`, `smithery.json`, `glama.json` (drafts; validate against live registry schemas at submission). Corrected vs. issue: `/mcp` is public read-only (no auth). Prep documented on #28. Publish after service restart + live `tools/list` smoke |
+| P5e | MARC author pass | **OPEN** | catline/serline pass is manual; consider a monthly timer |
 
 ## P6 — Infrastructure (all DONE this cycle)
 
@@ -182,6 +184,19 @@ Whether to write swiftm against the **Dafny proofs directly** (extract the spec 
 
 ---
 
+## P8 — M ecosystem survey (2026-10-28) — v1 DONE, follow-ups open
+
+GitHub (`language:MUMPS`, 3,542 repos, served to the 1,000-result cap) + GitLab + SourceForge surveyed; 26 repos content-verified as genuine M (GitHub's "M"/"MUMPS" tag also catches MATLAB/Mathematica `.m` files — verification sampled real source). **Clones in `~/m-ecosystem/`** (34 total: 18 GitHub + 8 GitLab + GT.M release tarball + manifest in `SURVEY.md`): union of top-10-by-stars / top-10-by-M-volume / top-10-by-recency. Excluded: VistA + FileMan (owned), RSM (owned oracle), forks, the Fortran sparse-solver "MUMPS" project. Highlights: FOIA-RPMS (232MB M), YDBTest, EWD, JADE, habitat (Lucasfilm remake), HL-GTM, MPM (M package manager), GT.M V7.2-001. Follow-ups: SF `mumps` (independent ANSI-M impl) file release fetch; **YDBTest as cross-engine conformance target** (GT.M P9 vs YottaDB vs mjvm).
+
+## P9 — GT.M instance on U01 (2026-10-28) — RUNNING
+
+- **Engine:** GT.M V7.2-001 (FIS, 2026-08-18 release; YottaDB's FIS parent) — user-space install `~/gtm/V7.2-001` (no root needed; sudo timestamps had expired), instance `~/gtm-ecosystem` (`gtm.dat`, env `gtm-env.sh` — `gtm_*` vars fully disjoint from `ydb_*`).
+- **Port plan:** YottaDB services = 8081/8082/9080/9187/9188; **GT.M services = 8181+**. Health endpoint `GTMHTTP.m` serves `{"engine":"GT.M V7.2-001","status":"ok"}` on **8181** (serial SOCKET responder, `$ET`-trapped; GT.M socket pattern from the survey's own M-Web-Server source).
+- **Smoke:** globals/arithmetic/`$DATA` pass; endpoint 3/3. Distribution tarball archived in `~/m-ecosystem/sourceforge/`.
+- **Follow-ups:** persistence for the HTTP service (systemd unit needs root — or `--user` + linger; currently nohup), full M-mode/UTF-8 dist selection, `$ZINT`/plugin inventory, YDBTest runs against it (with P8).
+
+---
+
 ## Done (historical — do not reopen)
 
 - **2026-10-26 fleet cleanup** — all 5 phases + follow-ups (PRs #47 #48)
@@ -190,6 +205,10 @@ Whether to write swiftm against the **Dafny proofs directly** (extract the spec 
 - **2026-10-27 edge containerized** — LXD container `edge`, fenced, snapshots, DMZ-equivalent containment
 - **2026-10-27 MeshGraph resumed** — services, edge, daily/weekly timers, backup timer, Dafny proofs (GraphStore + BM25 + Scan)
 - **2026-10-27 Dafny corpus 464 → 547** — GraphStore.dfy, BM25.dfy, Scan.dfy (PRs #67 #69 #70)
+- **2026-10-28 MeshGraph post-resume heal** — retention semantics verified (NO phantom kill), dead PTERM guard fixed (caret bug), 142,763 docs indexed, dangling = SCR-by-design cleared, WAND pruning live (13–33s → 0.2–3.5s), updatefile retention live, first post-resume backup to U02
+- **2026-10-28 JavaM REPL (#35/#36) verified DONE** — closed at v0.9.0; scripted CI smoke restored to mjvm `gauntlet.yml` (c8ada1a) after being lost in the repo split
+- **2026-10-28 P8 M ecosystem survey** — GitHub/GitLab/SourceForge; 34 artifacts cloned to `~/m-ecosystem/` (SURVEY.md); content-verified genuine-M selections (stars/M-volume/recency), VistA/FileMan/RSM excluded
+- **2026-10-28 P9 GT.M V7.2-001 instance** — user-space install on U01, disjoint `gtm_*` env, HTTP health endpoint on 8181 (port plan: GT.M 8181+, YottaDB 8081/8082/9080/9187/9188)
 - **mjvm v2.2.0 / v2.2.1 / v2.2.2** correctness hardening — 17 bugs total, 45+ regression tests
 - **JavaM v0.4.0 / v0.5.0 / v1.2.0** · perf review · concurrency audits · Cdb2 LOCK/TSTART
 - **MeshGraph** BM25 rebuild + author-pass + related_rev (pre-pause, all green)
@@ -200,7 +219,8 @@ Whether to write swiftm against the **Dafny proofs directly** (extract the spec 
 
 | Role | |
 |------|--|
-| mjvm + JavaM | primary development |
+| mjvm | **sole development path** (JavaM frozen; parser/lexer + REPL live in mjvm) |
+| JavaM | frozen full-M oracle (v1.2.0) — reference only |
 | MeshGraph | data product, **ACTIVE** |
 | RSM | oracle only (archived) |
 | Py/C3 | corpus freeze |
