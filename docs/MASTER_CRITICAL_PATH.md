@@ -41,6 +41,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 
   P1a mjvm compiler coverage 36.4% → 60%      (peephole + error paths first)
   P1b mjvm VistA class-4: comma 17,057 (28.3%)  ← largest remaining backlog class
+  P1c mjvm engine-gap items (mjvm#4–#10)       (micro-benchmark findings; #4 correctness first)
   P2b JavaM rename hygiene + VistA full run   (#27, #34)
 
   P5d MeshGraph: MCP registry listings        (ydb-mesh#28 — prep done, publish after restart)
@@ -69,6 +70,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | Compiler coverage | **MEASURED, TARGET OPEN** | 36.4% lines (total project 79%). 60% compiler target: peephole + error paths first |
 | **VistA swallowed-syntax backlog** | **IN FLIGHT — classes 1-2 DONE, class 4 (comma) next** | Baseline 21,452 routines (63.2%) → **14,430 (42.5%)** after classes 1-2. Remaining: comma **17,057 (28.3%)** → postcond 16,204 (26.9%) → @ 4,168 → dotted 2,483 → $ 1,182 → SET 1,180 → tail 9,070. Detail: `mjvm/docs/VISTA-SYNTAX-BACKLOG.md` |
 | CI fix (untracked jars + gates) | **DONE** | archunit + jmh-core jars tracked; GAUNTLET env-overridable gates; green on u04 |
+| **Engine-gap micro-benchmark findings** | **OPEN — mjvm#4–#10** | 2026-10-28 four-engine benchmark (GT.M V7.2-001 / YDB r2.06 / RSM V1.83.1 / mJVM IR; data + methodology: `~/m-ecosystem/SURVEY.md`). mJVM vs GT.M/YDB: ~15x on compute loops, 33x on `$PIECE`, 15x on local sets. Filed: **#4** silent no-op `W:cond` (correctness — fix first; adjacent to P1b disambiguation) · **#5** portable harness in `bench/` (land before optimizing) · **#6** IR hot-loop audit (570ns/iter) · **#7** dense-numeric locals fast path · **#8** `$PIECE` hot path · **#9** `--jit` measurement + default decision · **#10** store-backend matrix. Side findings: GT.M/YDB parity confirmed; RSM `$ORDER` walks are **quadratic** (local + global) — fine for its oracle role, disqualifying for big-data use |
 
 ## P2 — JavaM / m-semantics
 
@@ -186,7 +188,7 @@ Whether to write swiftm against the **Dafny proofs directly** (extract the spec 
 
 ## P8 — M ecosystem survey (2026-10-28) — v1 DONE, follow-ups open
 
-GitHub (`language:MUMPS`, 3,542 repos, served to the 1,000-result cap) + GitLab + SourceForge surveyed; 26 repos content-verified as genuine M (GitHub's "M"/"MUMPS" tag also catches MATLAB/Mathematica `.m` files — verification sampled real source). **Clones in `~/m-ecosystem/`** (34 total: 18 GitHub + 8 GitLab + GT.M release tarball + manifest in `SURVEY.md`): union of top-10-by-stars / top-10-by-M-volume / top-10-by-recency. Excluded: VistA + FileMan (owned), RSM (owned oracle), forks, the Fortran sparse-solver "MUMPS" project. Highlights: FOIA-RPMS (232MB M), YDBTest, EWD, JADE, habitat (Lucasfilm remake), HL-GTM, MPM (M package manager), GT.M V7.2-001. Follow-ups: SF `mumps` (independent ANSI-M impl) file release fetch; **YDBTest as cross-engine conformance target** (GT.M P9 vs YottaDB vs mjvm).
+GitHub (`language:MUMPS`, 3,542 repos, served to the 1,000-result cap) + GitLab + SourceForge surveyed; 26 repos content-verified as genuine M (GitHub's "M"/"MUMPS" tag also catches MATLAB/Mathematica `.m` files — verification sampled real source). **Clones in `~/m-ecosystem/`** (34 total: 18 GitHub + 8 GitLab + GT.M release tarball + manifest in `SURVEY.md`): union of top-10-by-stars / top-10-by-M-volume / top-10-by-recency. Excluded: VistA + FileMan (owned), RSM (owned oracle), forks, the Fortran sparse-solver "MUMPS" project. Highlights: FOIA-RPMS (232MB M), YDBTest, EWD, JADE, habitat (Lucasfilm remake), HL-GTM, MPM (M package manager), GT.M V7.2-001. Follow-ups: SF `mumps` 1.71 tarball (Cloudflare cooldown; V1.64 source captured via the `Duraznos/rubella` mirror); **YDBTest as cross-engine conformance target** (GT.M P9 vs YottaDB vs mjvm). The **four-engine micro-benchmark** (GT.M/YDB/RSM/mJVM) is recorded in `SURVEY.md`; mJVM follow-ups filed as **mjvm#4–#10** (P1c).
 
 ## P9 — GT.M instance on U01 (2026-10-28) — RUNNING
 
@@ -209,6 +211,7 @@ GitHub (`language:MUMPS`, 3,542 repos, served to the 1,000-result cap) + GitLab 
 - **2026-10-28 JavaM REPL (#35/#36) verified DONE** — closed at v0.9.0; scripted CI smoke restored to mjvm `gauntlet.yml` (c8ada1a) after being lost in the repo split
 - **2026-10-28 P8 M ecosystem survey** — GitHub/GitLab/SourceForge; 34 artifacts cloned to `~/m-ecosystem/` (SURVEY.md); content-verified genuine-M selections (stars/M-volume/recency), VistA/FileMan/RSM excluded
 - **2026-10-28 P9 GT.M V7.2-001 instance** — user-space install on U01, disjoint `gtm_*` env, HTTP health endpoint on 8181 (port plan: GT.M 8181+, YottaDB 8081/8082/9080/9187/9188)
+- **2026-10-28 four-engine micro-benchmark** — GT.M/YDB parity; RSM `$ORDER` quadratic; mJVM IR ~15x compute gap; findings filed as mjvm#4–#10; recorded in `~/m-ecosystem/SURVEY.md`
 - **mjvm v2.2.0 / v2.2.1 / v2.2.2** correctness hardening — 17 bugs total, 45+ regression tests
 - **JavaM v0.4.0 / v0.5.0 / v1.2.0** · perf review · concurrency audits · Cdb2 LOCK/TSTART
 - **MeshGraph** BM25 rebuild + author-pass + related_rev (pre-pause, all green)
