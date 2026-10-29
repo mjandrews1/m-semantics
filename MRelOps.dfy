@@ -17,6 +17,10 @@
 // (fixes mjvm#26-#28). The CanonAgree lemma is the safety statement for
 // ExprEval's numeric fast path: both rule-sets coincide on canonical
 // numerics, so the fast path needs only the canonical-operand guard.
+//
+// Verified: 23 results (13 lemmas + 2 datatype functions from the initial
+// parallel-session draft; 10 more lemmas merged from the v1 draft on branch
+// mrelops-dfy), 0 errors (Dafny 4.11).
 
 module MRelOps {
 
@@ -208,7 +212,6 @@ module MRelOps {
   // ----- opmatrix truth-table cells (GT.M V7.2-001, 2026-10-29) ----------
   // Representative cells from tools/opmatrix.m, GT.M column. Every assert
   // was produced by GT.M on U01; mjvm matches all of them after #26-#28.
-
   lemma TruthTableEquality()
   {
     // = : C24 cells — GT.M string-compares, ISO numeric-compares.
@@ -279,5 +282,163 @@ module MRelOps {
     assert !mNotCollAfter(ONum(10.0, "10"), ONum(9.0, "9"));
     assert mNotCollAfter(ONum(7.0, "7"), ONumStr(7.0, "007"));
     assert mNotCollAfter(ONum(2.0, "2"), ONum(2.0, "2"));
+  }
+
+  // ===========================================================================
+  // Structural lemmas and extended cell coverage (merged from the parallel
+  // session's v1 draft, branch mrelops-dfy): lex laws, collation laws, and
+  // the remaining opmatrix GT.M cells.
+  // ===========================================================================
+
+  // ----- lex laws -----------------------------------------------------------
+
+  lemma LexReflexive(a: Str)
+    ensures lex(a, a) == 0
+    decreases |a|
+  {
+    if |a| > 0 {
+      LexReflexive(a[1..]);
+    }
+  }
+
+  lemma LexNeg(a: Str, b: Str)
+    ensures lex(a, b) == -lex(b, a)
+    decreases |a| + |b|
+  {
+    if |a| == 0 || |b| == 0 {
+    } else if a[0] < b[0] || a[0] > b[0] {
+    } else {
+      LexNeg(a[1..], b[1..]);
+    }
+  }
+
+  lemma LexAntisymmetric(a: Str, b: Str)
+    ensures lex(a, b) > 0 ==> lex(b, a) < 0
+  {
+    LexNeg(a, b);
+  }
+
+  // ----- collation laws (structural) ----------------------------------------
+
+  lemma CollNoSelf(x: Opnd)
+    ensures !mCollAfter(x, x)
+  {
+    match x {
+      case ONull =>
+      case ONum(_, _) =>
+      case ONumStr(_, _) =>
+      case OStr(r) =>
+        LexReflexive(r);
+    }
+  }
+
+  lemma CollAntisymmetric(a: Opnd, b: Opnd)
+    ensures mCollAfter(a, b) ==> !mCollAfter(b, a)
+  {
+    if a.OStr? && b.OStr? {
+      LexNeg(str(a), str(b));
+    }
+  }
+
+  // ----- null-string containment ---------------------------------------------
+
+  // The null string is contained in everything; a non-null string is
+  // contained in nothing (opmatrix row 9, cells 10-14).
+  lemma ContainsNull(a: Opnd, b: Opnd)
+    ensures mContains(a, ONull)
+    ensures |str(b)| > 0 ==> !mContains(ONull, b)
+  {
+  }
+
+  // ----- negated equality (C24 from the '= side) -----------------------------
+
+  function isoNotEq(a: Opnd, b: Opnd): bool
+  {
+    !isoEq(a, b)
+  }
+
+  function gtmNotEq(a: Opnd, b: Opnd): bool
+  {
+    !gtmEq(a, b)
+  }
+
+  // ----- extended opmatrix cells ---------------------------------------------
+
+  lemma TruthTableContainsExtra()
+  {
+    // Null containment cells (GT.M: "0123456789"["" is 1; ""["x" is 0).
+    assert mContains(OStr("0123456789"), ONull);
+    assert mContains(ONull, ONull);
+    assert !mContains(ONull, OStr("x"));
+    // "123" contains no "4" (mjvm#26 numeric-coercion companion cell).
+    assert !containsFrom("123", 3, "4");
+    assert !containsFrom("123", 2, "4");
+    assert !containsFrom("123", 1, "4");
+    assert !containsFrom("123", 0, "4");
+    assert !mContains(ONum(123.0, "123"), ONum(4.0, "4"));
+    // The digit string contains no 'a'.
+    assert !containsFrom("0123456789", 10, "a");
+    assert !containsFrom("0123456789", 9, "a");
+    assert !containsFrom("0123456789", 8, "a");
+    assert !containsFrom("0123456789", 7, "a");
+    assert !containsFrom("0123456789", 6, "a");
+    assert !containsFrom("0123456789", 5, "a");
+    assert !containsFrom("0123456789", 4, "a");
+    assert !containsFrom("0123456789", 3, "a");
+    assert !containsFrom("0123456789", 2, "a");
+    assert !containsFrom("0123456789", 1, "a");
+    assert !containsFrom("0123456789", 0, "a");
+    assert !mContains(OStr("0123456789"), OStr("a"));
+  }
+
+  lemma TruthTableSortsAfterExtra()
+  {
+    // ] is bytewise even when both sides are numeric: "999" sorts after
+    // "2" (GT.M 999]2 -> 1), but "10" does not sort after "9" (-> 0).
+    assert mSortsAfter(ONum(999.0, "999"), ONum(2.0, "2"));
+    assert !mSortsAfter(ONum(10.0, "10"), ONum(9.0, "9"));
+    // '] cells (GT.M probes 2026-10-29):
+    //   1']2 -> 1, "a"']"b" -> 1, "x"']"x" -> 1, 2']1 -> 0, "b"']"a" -> 0.
+    assert mNotSortsAfter(ONum(1.0, "1"), ONum(2.0, "2"));
+    assert mNotSortsAfter(OStr("a"), OStr("b"));
+    assert mNotSortsAfter(OStr("x"), OStr("x"));
+    assert !mNotSortsAfter(ONum(2.0, "2"), ONum(1.0, "1"));
+    assert !mNotSortsAfter(OStr("b"), OStr("a"));
+    // Case sensitivity is bytewise: "a" sorts after "A".
+    assert mSortsAfter(OStr("a"), OStr("A"));
+  }
+
+  lemma TruthTableCollationExtra()
+  {
+    // The string class of ]] collates lexically (opmatrix row 12).
+    assert mCollAfter(OStr("b"), OStr("a"));
+    assert !mCollAfter(OStr("a"), OStr("b"));
+    assert !mCollAfter(OStr("A"), OStr("a"));
+    // Numbers sort before strings regardless of magnitude.
+    assert !mCollAfter(ONum(0.25, "0.25"), OStr("A"));
+    assert mCollAfter(OStr("A"), ONum(0.25, "0.25"));
+    // ']] probes (GT.M 2026-10-29):
+    //   "10"']]9 -> 0, "9"']]9 -> 1, "abc"']]9 -> 0.
+    assert !mNotCollAfter(ONum(10.0, "10"), ONum(9.0, "9"));
+    assert mNotCollAfter(ONum(9.0, "9"), ONum(9.0, "9"));
+    assert !mNotCollAfter(OStr("abc"), ONum(9.0, "9"));
+  }
+
+  lemma TruthTableNegatedEquality()
+  {
+    // '= agrees on canonical numerics and plain strings.
+    assert !isoNotEq(ONum(5.0, "5"), ONum(5.0, "5"));
+    assert !gtmNotEq(ONum(5.0, "5"), ONum(5.0, "5"));
+    assert isoNotEq(ONum(1.0, "1"), ONum(2.0, "2"));
+    assert gtmNotEq(ONum(1.0, "1"), ONum(2.0, "2"));
+    assert isoNotEq(OStr("a"), OStr("b"));
+    assert gtmNotEq(OStr("a"), OStr("b"));
+    // C24 seen from '=: ISO numeric-loose says "7"'"007" is 0 (they are
+    // numerically equal); GT.M says 1 (bytewise different).
+    assert !isoNotEq(ONum(7.0, "7"), ONumStr(7.0, "007"));
+    assert gtmNotEq(ONum(7.0, "7"), ONumStr(7.0, "007"));
+    // T11: "" is not a numeric string in either arbiter, so ""'"0" is 1.
+    assert isoNotEq(ONull, ONum(0.0, "0"));
+    assert gtmNotEq(ONull, ONum(0.0, "0"));
   }
 }
