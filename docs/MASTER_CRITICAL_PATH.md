@@ -36,7 +36,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 
 ```
   P0a Portal password rotation               (user)
-  P0b U02 meshgraph-backup second copy       (user decision: U04 LV? 5th host? accept risk?)
+  P0b U02 meshgraph-backup second copy       (IN FLIGHT — U04 copy completing overnight)
   P0c U01 YDB journaling re-enable           (DONE 2026-10-29 — enabled while quiesced)
 
   P1a mjvm compiler coverage 36.4% → 60%      (peephole + error paths first)
@@ -58,7 +58,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | Work | Status | Note |
 |------|--------|------|
 | Rotate portal credential (`home.flamingyak.com`) | **OPEN** (user) | Scrubbed from skill files 2026-10-26; rotation itself outstanding |
-| U02 `meshgraph-backup` second copy | **OPEN** (user) | Top data risk. U04 has 828G free VG; decision pending |
+| U02 `meshgraph-backup` second copy | **IN FLIGHT 2026-10-29 (~02:40 UTC)** | The Oct-27 attempt (U04 `/backup/meshgraph-backup.inprogress`, 224G) had stalled: rsync died `Host key verification failed`/`publickey` — U04↔U02 had no SSH trust (likely pruned in the Oct-27 hardening; U04's mark had no keypair at all). Fixed: generated `u04-backup-pull` ed25519 on U04, authorized on U02 (one commented line — remove by deleting it); completing rsync relaunched `--inplace` (disk-flat) from U02's current post-heal backup over the stale pre-resume partial. ~224G over tailnet at the observed ~8MB/s ≈ 8h; completion verification cron armed (size-verify vs U02, atomic rename, then this row → DONE) |
 | U01 YDB journaling re-enable | **DONE 2026-10-29** | Enabled while writer-quiesced (immediately after the daily run's DAILY_DONE 00:16 UTC): `mupip set -journal=ENABLE,FILE=~/.yottadb/r2.06_x86_64/g/yottadb.mjl -region DEFAULT` — before-images on, old Oct-10 journal auto-rotated to `yottadb.mjl_2026302002536`. Verified by write-through (`^JOURNALTEST` probe: journal 68K→78K) and `dse` header showing `Journal State ON`. The post-heal backup on U02 was verified first (2026-10-28 BACKUP OK) |
 
 ## P1 — mjvm (primary dev)
