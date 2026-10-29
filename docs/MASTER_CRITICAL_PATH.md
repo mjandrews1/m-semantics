@@ -42,7 +42,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
   P1a mjvm compiler coverage 36.4% → 60%      (peephole + error paths first)
   P1b mjvm VistA class-4: comma 17,057 (28.3%)  ← largest remaining backlog class
   P1c mjvm engine-gap items (mjvm#4–#10)       (micro-benchmark findings; #4 correctness first)
-  P2b JavaM rename hygiene + VistA full run   (#27, #34)
+  P2b ~~JavaM rename + VistA full run~~    (DONE — #27/#34 closed on GitHub; path was stale)
 
   P5d MeshGraph: MCP registry listings        (ydb-mesh#28 — prep done, publish after restart)
   P5e MeshGraph: MARC author pass timer      (catline/serline pass is manual)
@@ -79,8 +79,8 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | 1.0 gate (FileMan Tier A/B/C, 135/4/0) | JavaM#32 #25 #26 | **DONE** (2026-10-17) |
 | v1.2.0 release | — | **DONE** |
 | REPL both engines | JavaM#35 #36 | **DONE — closed at v0.9.0** (13ca164 + 210852e, jvmumps repo). Path was stale; verified live 2026-10-28: both shells (`jvmumps.Repl`, `mjvm.cli.Repl`) pass the scripted session against the mjvm build; the CI smoke lost in the mjvm split restored in `gauntlet.yml` (c8ada1a) |
-| Rename leftovers (docs/CI badges) | JavaM#27 | **OPEN** |
-| VistA full run under JavaM + mJVM | JavaM#34 | **OPEN** (last: 99.97%) |
+| Rename leftovers (docs/CI badges) | JavaM#27 | **DONE — closed on GitHub; path was stale (verified 2026-10-29)** |
+| VistA full run under JavaM + mJVM | JavaM#34 | **DONE — closed on GitHub; path was stale (verified 2026-10-29): 99.97% (33,942/33,951) on BOTH engines, 0 engine gaps, 7 DATA (truncated sources) + 2 DIALECT failures, 0.148ms/routine parse** |
 | Dafny corpus: **547 verified** | m-semantics | **DONE this cycle** (M-semantics 464 + GraphStore 25 + BM25 42 + Scan 16) |
 
 ### Dafny proof files (all 0 errors, Dafny 4.11, CI-verified)
