@@ -41,3 +41,6 @@ jobs:
 
       - name: Verify MRelOps
         run: dafny verify MRelOps.dfy
+
+      - name: Verify BST
+        run: dafny verify BST.dfy
