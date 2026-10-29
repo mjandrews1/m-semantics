@@ -38,3 +38,6 @@ jobs:
 
       - name: Verify Scan
         run: dafny verify Scan.dfy
+
+      - name: Verify MRelOps
+        run: dafny verify MRelOps.dfy
