@@ -1,6 +1,16 @@
 # Master critical path — all projects (unified)
 
-**Last updated:** 2026-10-29 (restore + bench-harness session) · **Home:** `m-semantics/docs/MASTER_CRITICAL_PATH.md` · **≡** `~/CRITICAL_PATH.md`
+**Last updated:** 2026-10-31 (m-ils web milestone + mjvm #40 collation session) · **Home:** `m-semantics/docs/MASTER_CRITICAL_PATH.md` · **≡** `~/CRITICAL_PATH.md`
+
+## ★ LATEST WORK QUEUE — 2026-10-31 ← HERE ★
+
+1. **#40 $O/$Q M collation — DONE 2026-10-31** (mjvm 5135b54: MCollation, canonical-numeric-first; ORACLE COLLATE byte-identical to GT.M; issue closed)
+2. **#33 store consolidation** — TieredStore as the only store; deprecate SqlStore/H2Store/MapDBStore (never deployed) — OPEN
+3. **Comdb2 `ilsdb` cluster** — master U02 + replica U04 running; U01 replica fails "low level meta table" — debug OPEN
+4. **Perf: parser-climb share** — mJVM fixture ingest 21s vs GT.M 6.3s; ~45% is ExprEval precedence climb; needs AST cache or --class emitter fixes (Bank_<LABEL> helpers, increment signature) — OPEN, schedule deliberately
+5. **#18 + MFrontend family (#4,#13,#16-#19,#21,#22,#24,#25,#35) — USER's P1b surface** — do not touch MFrontend.java from agents
+
+m-ils state: Phase 0 fixture (138,966 nodes byte-identical dual-engine) + Phase 1 CRUD stress (2,000 ops, state byte-identical) + web UI live on both engines (GT.M U01:8282, mJVM Mac:8282) — repo mjandrews1/m-ils @ e9de5a3.
 **Detail docs:** JavaM `jvmumps/CRITICAL_PATH.md` · `jvmumps/docs/ROADMAP-0.5.0.md` · mjvm `mjvm/docs/` · inventory `m-semantics/docs/MASTER-INVENTORY.md`
 
 **Name lock:** **MeshGraph** = product · **`ydb-mesh`** = code · **JavaM** = `mjandrews1/JavaM` (JvMumps) — **FROZEN oracle**; parser/lexer (and REPL) moved to mjvm, one codebase, one dev path going forward · **mjvm** = `mjandrews1/mjvm` (JIT engine) · **tsx** = Comdb2 time-series.
