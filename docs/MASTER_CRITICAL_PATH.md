@@ -1,12 +1,12 @@
 # Master critical path — all projects (unified)
 
-**Last updated:** 2026-10-31 (m-ils web milestone + mjvm #40 collation session) · **Home:** `m-semantics/docs/MASTER_CRITICAL_PATH.md` · **≡** `~/CRITICAL_PATH.md`
+**Last updated:** 2026-10-31 late (fleet post-switch restart + Comdb2 cluster DONE + checkpointed 1M soaks) · **Home:** `m-semantics/docs/MASTER_CRITICAL_PATH.md` · **≡** `~/CRITICAL_PATH.md`
 
 ## ★ LATEST WORK QUEUE — 2026-10-31 ← HERE ★
 
 1. **#40 $O/$Q M collation — DONE 2026-10-31** (mjvm 5135b54: MCollation, canonical-numeric-first; ORACLE COLLATE byte-identical to GT.M; issue closed)
 2. **#33 store consolidation — DONE 2026-10-31** (mjvm a93e081: -v makes TieredStore volumes; h2/mapdb/sqlite +warn; memory/tiered/cdb2 kept)
-3. **Comdb2 `ilsdb` cluster — IN PROGRESS**: U02 master COHERENT, U01 replica COHERENT (on a 512-sector loop device — U01's NVMe is 4Kn and comdb2's 512B O_DIRECT reads EINVAL there, root-caused); U04 recopy pending (copycomdb2 needs comdb2ar_rmt). Also done today: U02 disk 100%→46% (stale backup copies removed after U04's second copy verified byte-identical; LV grown 850→928G), NOPASSWD sudo on all 4 hosts, disk-watch loop ceb6ad87 every 6h
+3. **Comdb2 `ilsdb` cluster — DONE 2026-10-31 20:20 UTC**: all three nodes COHERENT (U02 master, U01 replica on a 512-sector loop device — U01's NVMe is 4Kn and comdb2's 512B O_DIRECT reads EINVAL there, root-caused; U04 replica recopied from master via `copycomdb2 -P /opt/bb/bin/comdb2ar` after the gigabit-switch reboot — U04's comdb2 build expects the /opt/bb layout, fixed with `sudo ln -sfn ~/comdb2 /opt/bb`; runbook `~/soak/FLEET-RESTART.md` updated with all restart gotchas). Also done 2026-10-31: U02 disk 100%→46% (stale backup copies removed after U04's second copy verified byte-identical; LV grown 850→928G), NOPASSWD sudo on all 4 hosts, disk-watch loop ceb6ad87 every 6h, fleet gracefully shut down + restarted for the switch install (U01–U04 all services back: ydb/mesh services+timers, GTMHTTP:8181=200, ILSWEB:8282=200, pmux+comdb2 on all, lxc edge+ydbtest on U03, 4 CI runners on U04, e/pi 1M soaks relaunched on U02 now CHECKPOINTED — see mjvm 4ee5636)
 4. **Perf: parser-climb share** — mJVM fixture ingest 21s vs GT.M 6.3s; ~45% is ExprEval precedence climb; needs AST cache or --class emitter fixes (Bank_<LABEL> helpers, increment signature) — OPEN, schedule deliberately
 5. **#18 + MFrontend family (#4,#13,#16-#19,#21,#22,#24,#25,#35) — USER's P1b surface** — do not touch MFrontend.java from agents
 6. **Rationalize/harmonize/optimize active projects + the jobs that run them** — NEW 2026-10-31 (owner request, not started): audit all cron loops / launchd jobs / CI runners / services; dedupe; document owner+cadence per job
