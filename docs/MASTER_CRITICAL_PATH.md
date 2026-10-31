@@ -6,11 +6,13 @@
 
 1. **#40 $O/$Q M collation — DONE 2026-10-31** (mjvm 5135b54: MCollation, canonical-numeric-first; ORACLE COLLATE byte-identical to GT.M; issue closed)
 2. **#33 store consolidation — DONE 2026-10-31** (mjvm a93e081: -v makes TieredStore volumes; h2/mapdb/sqlite +warn; memory/tiered/cdb2 kept)
-3. **Comdb2 `ilsdb` cluster** — master U02 + replica U04 running; U01 replica fails "low level meta table" — debug OPEN
+3. **Comdb2 `ilsdb` cluster — IN PROGRESS**: U02 master COHERENT, U01 replica COHERENT (on a 512-sector loop device — U01's NVMe is 4Kn and comdb2's 512B O_DIRECT reads EINVAL there, root-caused); U04 recopy pending (copycomdb2 needs comdb2ar_rmt). Also done today: U02 disk 100%→46% (stale backup copies removed after U04's second copy verified byte-identical; LV grown 850→928G), NOPASSWD sudo on all 4 hosts, disk-watch loop ceb6ad87 every 6h
 4. **Perf: parser-climb share** — mJVM fixture ingest 21s vs GT.M 6.3s; ~45% is ExprEval precedence climb; needs AST cache or --class emitter fixes (Bank_<LABEL> helpers, increment signature) — OPEN, schedule deliberately
 5. **#18 + MFrontend family (#4,#13,#16-#19,#21,#22,#24,#25,#35) — USER's P1b surface** — do not touch MFrontend.java from agents
+6. **Rationalize/harmonize/optimize active projects + the jobs that run them** — NEW 2026-10-31 (owner request, not started): audit all cron loops / launchd jobs / CI runners / services; dedupe; document owner+cadence per job
+7. **Fleet + WIP dashboard** — NEW 2026-10-31 (owner request, not started): dashboard of how things work + WIP status, refreshed at regular (batch) intervals — not real-time; EXCEPT genuinely live services (GTMHTTP U01:8181, ILSWEB U01:8282, mJVM web Mac:8282) which can be probed live. Owner understands hard-realtime vs colloquial "real time"; our jobs are batch/soak. Design: cron-regenerated static page from soak logs, loop list, fuzz ledger, disk watch, comdb2 coherence, CI status, live-UI probes
 
-m-ils state: Phase 0 fixture (138,966 nodes byte-identical dual-engine) + Phase 1 CRUD stress (2,000 ops, state byte-identical) + web UI live on both engines (GT.M U01:8282, mJVM Mac:8282) — repo mjandrews1/m-ils @ e9de5a3.
+m-ils state: Phase 0 fixture (138,966 nodes byte-identical dual-engine) + Phase 1 CRUD stress (2,000 ops, state byte-identical) + web UI live on both engines (GT.M U01:8282, mJVM Mac:8282) — repo mjandrews1/m-ils @ e9de5a3. tsx DEPRECATED 2026-10-31 (archived + banner).
 **Detail docs:** JavaM `jvmumps/CRITICAL_PATH.md` · `jvmumps/docs/ROADMAP-0.5.0.md` · mjvm `mjvm/docs/` · inventory `m-semantics/docs/MASTER-INVENTORY.md`
 
 **Name lock:** **MeshGraph** = product · **`ydb-mesh`** = code · **JavaM** = `mjandrews1/JavaM` (JvMumps) — **FROZEN oracle**; parser/lexer (and REPL) moved to mjvm, one codebase, one dev path going forward · **mjvm** = `mjandrews1/mjvm` (JIT engine) · **tsx** = Comdb2 time-series.
@@ -37,7 +39,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | **tieredstore-rs** | Rust TieredStore prototype (published, CI green on u04) | active | P4 |
 | **pymumps** | peer corpus host (restored on Mac) | active | P5 |
 | **fileman** | frozen VistA corpus | frozen | FROZEN |
-| **tsx / comdb2** | time-series + SQL plane | **PAUSED** | FROZEN |
+| **tsx / comdb2** | time-series + SQL plane | **DEPRECATED 2026-10-31** | FROZEN |
 | **RSM** | archived → `U02:coldstore/mac-rsm-2026-10-26/` | FROZEN | FROZEN |
 
 ---
@@ -247,7 +249,7 @@ GitHub (`language:MUMPS`, 3,542 repos, served to the 1,000-result cap) + GitLab 
 | MeshGraph | data product, **ACTIVE** |
 | RSM | oracle only (archived) |
 | Py/C3 | corpus freeze |
-| tsx / comdb2 | time-series plane, **PAUSED** |
+| tsx / comdb2 | time-series plane, **DEPRECATED 2026-10-31** (tsx repo archived w/ banner) |
 | fst / O'Kane / FreeM | frozen / adjunct |
 | swiftm | spec validation, **PROPOSED** (after P1b) |
 | m-semantics | spec + master docs home (PR-only main) |
