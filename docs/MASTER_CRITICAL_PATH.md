@@ -5,7 +5,7 @@
 ## ★ LATEST WORK QUEUE — 2026-10-31 ← HERE ★
 
 1. **#40 $O/$Q M collation — DONE 2026-10-31** (mjvm 5135b54: MCollation, canonical-numeric-first; ORACLE COLLATE byte-identical to GT.M; issue closed)
-2. **#33 store consolidation** — TieredStore as the only store; deprecate SqlStore/H2Store/MapDBStore (never deployed) — OPEN
+2. **#33 store consolidation — DONE 2026-10-31** (mjvm a93e081: -v makes TieredStore volumes; h2/mapdb/sqlite +warn; memory/tiered/cdb2 kept)
 3. **Comdb2 `ilsdb` cluster** — master U02 + replica U04 running; U01 replica fails "low level meta table" — debug OPEN
 4. **Perf: parser-climb share** — mJVM fixture ingest 21s vs GT.M 6.3s; ~45% is ExprEval precedence climb; needs AST cache or --class emitter fixes (Bank_<LABEL> helpers, increment signature) — OPEN, schedule deliberately
 5. **#18 + MFrontend family (#4,#13,#16-#19,#21,#22,#24,#25,#35) — USER's P1b surface** — do not touch MFrontend.java from agents
