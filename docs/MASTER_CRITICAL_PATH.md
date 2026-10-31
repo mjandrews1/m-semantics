@@ -37,7 +37,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | **tieredstore-rs** | Rust TieredStore prototype (published, CI green on u04) | active | P4 |
 | **pymumps** | peer corpus host (restored on Mac) | active | P5 |
 | **fileman** | frozen VistA corpus | frozen | FROZEN |
-| **tsx / comdb2** | time-series + SQL plane | **PAUSED** | FROZEN |
+| **tsx / comdb2** | time-series + SQL plane | **DEPRECATED 2026-10-31** | FROZEN |
 | **RSM** | archived → `U02:coldstore/mac-rsm-2026-10-26/` | FROZEN | FROZEN |
 
 ---
@@ -247,7 +247,7 @@ GitHub (`language:MUMPS`, 3,542 repos, served to the 1,000-result cap) + GitLab 
 | MeshGraph | data product, **ACTIVE** |
 | RSM | oracle only (archived) |
 | Py/C3 | corpus freeze |
-| tsx / comdb2 | time-series plane, **PAUSED** |
+| tsx / comdb2 | time-series plane, **DEPRECATED 2026-10-31** (tsx repo archived w/ banner) |
 | fst / O'Kane / FreeM | frozen / adjunct |
 | swiftm | spec validation, **PROPOSED** (after P1b) |
 | m-semantics | spec + master docs home (PR-only main) |
