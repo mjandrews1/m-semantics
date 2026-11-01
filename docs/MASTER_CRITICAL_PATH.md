@@ -7,15 +7,15 @@
 
 (Recently DONE, for the record: #40 collation 5135b54 · #33 store consolidation a93e081 · Comdb2 cluster 3-node COHERENT · jobs audit PR #100 · fleet dashboard PR #101 — see git history.)
 
-1. **U01 MeshGraph DB recovery finish + shrink redo — IN PROGRESS**: live yottadb.dat (237.6 GB) was destroyed 2026-10-31 by a truncate-on-open patch bug during a shrink attempt; restored byte-exact from the U02/U04 coldstore backup (Oct 28 state; articles=44,442,075; services verified); replay update run since 22:46 UTC re-applying Oct 29–31 updatefiles (want=3,396,339, missing=72,717). Remaining: confirm DAILY_DONE, then redo the shrink safely — gld allocation 46M blocks (~188 GB) via YDB r2.06 GDE objects from the official r2.06 tarball (never GT.M's GDE: writes gld format 117, YDB r206 reads 115), then patch the 64-bit total/free header fields in place (sysopen O_RDWR — NOT `>`) and truncate; verify via dse + rundown + query. Related done: U03 LV 100G→462.7G (17%), U04 LV 450G→928.5G (28%); U01/U02 already span their virtual disks (hypervisor growth + pvresize if more needed).
-2. **Perf: parser-climb share — OPEN, schedule deliberately**: mJVM fixture ingest 21s vs GT.M 6.3s; ~45% is ExprEval precedence climb; fix via AST cache or --class emitter fixes (`Bank_<LABEL>` helpers, `rt.increment` signature skew at MExprJava.java:303).
-3. **#18 + MFrontend family (#4,#13,#16–#19,#21,#22,#24,#25,#35) — USER's P1b surface**: agents do not touch MFrontend.java; P1b comma work converges here.
-4. **P1d conformance campaign — OPEN, on track, sprint → 2026-11-30** (charter `mjvm/docs/CONFORMANCE-CAMPAIGN.md`): ORACLE gate live in GAUNTLET CI on u04 (127 cases, diverge=0), nightly fuzz + triage loop, e/pi 1M soaks CHECKPOINTED on U02 (mjvm 4ee5636; resume verified byte-identical after kill -9), YDBTest basic suite running on U03 container for P8 triage.
-5. **Engine-gap micro-benchmarks — OPEN**: mjvm #4, #12–#14 outstanding (#5,#6,#8–#11 done).
-6. **VistA swallowed-syntax backlog — IN FLIGHT**: classes 1–2 done (21,452 → 14,430 routines failing to parse, 63.2%→42.5%); comma class next.
-7. **Compiler coverage — TARGET OPEN**: 36.4% lines (project total 79%); 60% compiler target, peephole + error paths first.
-8. **Portal credential rotation (home.flamingyak.com) — OPEN, owner**: scrubbed from skill files 2026-10-26; rotation itself outstanding.
-9. **m-ils (demonstration ILS in M) — OPEN, milestone stable**: Phase 0 fixture (138,966 nodes byte-identical GT.M vs mJVM) + Phase 1 CRUD stress (2,000 ops, state byte-identical) + dual web UI live (GT.M U01:8282, mJVM Mac:8282 via mjvm#32 sockets) — repo mjandrews1/m-ils @ e9de5a3. Next: (a) close the measured perf gap (fixture ingest 21.2s mJVM vs 6.3s GT.M) once open item 2 (parser-climb/AST cache, --class emitter gaps `Bank_<LABEL>` + `rt.increment` skew) lands — re-run tools/build-*-run.sh dual-engine after; (b) keep the ILSTEST battery all-OK on both engines for every change; (c) storage stays tieredstore-default + comdb2 ilsdb on the fleet cluster (owner decision — no sqlite/h2/mapdb migration). TUI (ILSTUI) present; further feature phases as scoped.
+CP01. **U01 MeshGraph DB recovery finish + shrink redo — IN PROGRESS**: live yottadb.dat (237.6 GB) was destroyed 2026-10-31 by a truncate-on-open patch bug during a shrink attempt; restored byte-exact from the U02/U04 coldstore backup (Oct 28 state; articles=44,442,075; services verified); replay update run since 22:46 UTC re-applying Oct 29–31 updatefiles (want=3,396,339, missing=72,717). Remaining: confirm DAILY_DONE, then redo the shrink safely — gld allocation 46M blocks (~188 GB) via YDB r2.06 GDE objects from the official r2.06 tarball (never GT.M's GDE: writes gld format 117, YDB r206 reads 115), then patch the 64-bit total/free header fields in place (sysopen O_RDWR — NOT `>`) and truncate; verify via dse + rundown + query. Related done: U03 LV 100G→462.7G (17%), U04 LV 450G→928.5G (28%); U01/U02 already span their virtual disks (hypervisor growth + pvresize if more needed).
+CP02. **Perf: parser-climb share — OPEN, schedule deliberately**: mJVM fixture ingest 21s vs GT.M 6.3s; ~45% is ExprEval precedence climb; fix via AST cache or --class emitter fixes (`Bank_<LABEL>` helpers, `rt.increment` signature skew at MExprJava.java:303).
+CP03. **#18 + MFrontend family (#4,#13,#16–#19,#21,#22,#24,#25,#35) — USER's P1b surface**: agents do not touch MFrontend.java; P1b comma work converges here.
+CP04. **P1d conformance campaign — OPEN, on track, sprint → 2026-11-30** (charter `mjvm/docs/CONFORMANCE-CAMPAIGN.md`): ORACLE gate live in GAUNTLET CI on u04 (127 cases, diverge=0), nightly fuzz + triage loop, e/pi 1M soaks CHECKPOINTED on U02 (mjvm 4ee5636; resume verified byte-identical after kill -9), YDBTest basic suite running on U03 container for P8 triage.
+CP05. **Engine-gap micro-benchmarks — OPEN**: mjvm #4, #12–#14 outstanding (#5,#6,#8–#11 done).
+CP06. **VistA swallowed-syntax backlog — IN FLIGHT**: classes 1–2 done (21,452 → 14,430 routines failing to parse, 63.2%→42.5%); comma class next.
+CP07. **Compiler coverage — TARGET OPEN**: 36.4% lines (project total 79%); 60% compiler target, peephole + error paths first.
+CP08. **Portal credential rotation (home.flamingyak.com) — OPEN, owner**: scrubbed from skill files 2026-10-26; rotation itself outstanding.
+CP09. **m-ils (demonstration ILS in M) — OPEN, milestone stable**: Phase 0 fixture (138,966 nodes byte-identical GT.M vs mJVM) + Phase 1 CRUD stress (2,000 ops, state byte-identical) + dual web UI live (GT.M U01:8282, mJVM Mac:8282 via mjvm#32 sockets) — repo mjandrews1/m-ils @ e9de5a3. Next: (a) close the measured perf gap (fixture ingest 21.2s mJVM vs 6.3s GT.M) once open item 2 (parser-climb/AST cache, --class emitter gaps `Bank_<LABEL>` + `rt.increment` skew) lands — re-run tools/build-*-run.sh dual-engine after; (b) keep the ILSTEST battery all-OK on both engines for every change; (c) storage stays tieredstore-default + comdb2 ilsdb on the fleet cluster (owner decision — no sqlite/h2/mapdb migration). TUI (ILSTUI) present; further feature phases as scoped.
 m-ils state: Phase 0 fixture (138,966 nodes byte-identical dual-engine) + Phase 1 CRUD stress (2,000 ops, state byte-identical) + web UI live on both engines (GT.M U01:8282, mJVM Mac:8282) — repo mjandrews1/m-ils @ e9de5a3. tsx DEPRECATED 2026-10-31 (archived + banner).
 **Detail docs:** JavaM `jvmumps/CRITICAL_PATH.md` · `jvmumps/docs/ROADMAP-0.5.0.md` · mjvm `mjvm/docs/` · inventory `m-semantics/docs/MASTER-INVENTORY.md`
 
@@ -202,9 +202,9 @@ All items **DONE** (published, README, CI green on u04, initial spec sync). Keep
 
 ### Prerequisites (before starting)
 
-1. **P1b (VistA class-4 comma) lands** — the comma semantics need to be in the Dafny proofs
-2. **A `MCommand.dfy`** — the command dispatch semantics (D/G/K/W multi-arg loops, postconditionals) formalized
-3. **A "minimal conforming M" test definition** — which of the 139 corpus tests are ISO-required vs. vendor-specific
+1.  **P1b (VistA class-4 comma) lands** — the comma semantics need to be in the Dafny proofs
+2.  **A `MCommand.dfy`** — the command dispatch semantics (D/G/K/W multi-arg loops, postconditionals) formalized
+3.  **A "minimal conforming M" test definition** — which of the 139 corpus tests are ISO-required vs. vendor-specific
 
 ### Open question
 
