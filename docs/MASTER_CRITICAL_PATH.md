@@ -47,6 +47,15 @@ JMH bench, smoke suite. Dafny corpus (m-semantics, 11 .dfy modules: MSemantics 7
 - P-1. **#12 Java→Kotlin conversion** (11-04 step 15): trigger changed 2026-11-05 to **after Phase 2 (step 2.6, m-ils MVP close-out)** — the 11-04 "after step 4" condition was already met; follow `mjvm/docs/KOTLIN-MIGRATION-DESIGN.md` (order ir→AST→emitter→store→runtime→core→MFrontend-last; per-step gates corpus+ORACLE+GAUNTLET+JMH). Design-only, green-lit 2026-11-04. Owner M decides.
 - P-2. **ORACLE upstream parity decision** (11-04 step 16; WRITE line-break class — RSM appends END_WRITE, GT.M doesn't): owner review, parked by design (flipping it changes the corpus peer target).
 
+
+## Next steps — recorded 2026-11-05 (rev2 execution order)
+1. **Phase 1.1** (owner M): clear/regenerate the stale gitignored `GAUNTLET.m` on the u04 runner → GAUNTLET CI green on main → merge mjvm#52 (EVAL_STORE fusion), mjvm#53 (fixture runner), m-semantics#118 (this path refresh).
+2. **Phase 2.1**: with #52 merged, re-run `tools/build-fixture-run.sh --gtm`; meet the ≤2x gate with one more documented lever (dispatch structure) or owner-M call at ~2.7x.
+3. **Phase 2.2** (no deps, agent): m-ils data-model + API design doc in `m-ils/docs/` — first deliverable per m-ils#1.
+4. **Phases 2.3–2.5**: auth / circulation / ILL per m-ils#1; every change ILSTEST all-OK on GT.M (U01:8282) AND mjvm (Mac:8282).
+5. **Phase 3.1**: verify the 2026-11-05 07:30Z U03 fuzz sub-gate (parser KNOWNs → PASS after adopting 2220408); declare campaign exit at 2026-11-30 if NEW=0 holds.
+6. **Phase 6.1** (parallel, agent): Dafny prerequisites — comma/SET-list module, `MControl.dfy`→`MCommand.dfy`, minimal-conforming-M definition.
+7. **Phase 4.2** (after 2.x): MeshGraph services port to M + Dafny re-verify gate (GraphStore/BM25/Scan).
 **Detail docs:** JavaM `jvmumps/CRITICAL_PATH.md` · `jvmumps/docs/ROADMAP-0.5.0.md` · mjvm `mjvm/docs/` · inventory `m-semantics/docs/MASTER-INVENTORY.md`
 
 **Name lock:** **MeshGraph** = product · **`ydb-mesh`** = code · **JavaM** = `mjandrews1/JavaM` (JvMumps) — **FROZEN oracle**; parser/lexer (and REPL) moved to mjvm, one codebase, one dev path going forward · **mjvm** = `mjandrews1/mjvm` (JIT engine) · **tsx** = Comdb2 time-series.
