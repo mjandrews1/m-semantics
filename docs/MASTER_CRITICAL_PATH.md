@@ -3,46 +3,49 @@
 **Last updated:** 2026-11-01 (fleet check; open items reordered — edge P0 + logrotate on top, U01 recovery confirmed; m-ils MVP expanded + item 11 added) · **2026-11-02:** dashboard/fuzz/disk-watch jobs moved Mac→U03 host (cron; dashweb on U03:8383, http://100.121.132.5:8383/); Mac Caddy + com.mjvm.fuzz launchd removed, Mac job-free; item 12 added (mJVM Java→Kotlin analysis, no code) · **2026-11-02 (eve):** U01 YottaDB DB scratched (block corruption confirmed; nightly update aborting) — meshgraph timers disabled on U01, GT.M migration confirmed (items 3, 11) · **2026-11-04:** critical + stand-alone lists merged into ONE plan ("★ THE PLAN" below, 6 phases, steps per phase, 2 parked) — it is now the critical path; end state = all steps DONE · **2026-11-04 (eve):** Phase 0 DONE — PR #45 merged (4e79149), GAUNTLET green on main; step 4 handed to agent: parser fixes committed on `p1b-parser` (34e8780, ec05094, 0aa9038), issues #4 #13 #16 #17 #18 #19 #21 #22 #24 #25 #35 closed, PR #47 open (local: ORACLE 97 pass/0 diverge, MFrontendRegression 53/53, GauntletRun 108/108); U03 fuzz ran 2026-11-04 07:30Z, 0 NEW · **2026-11-05:** step 17 SwiftM (P7) added — spec-first M in Swift for macOS, spec-validation learning port (m-semantics#72); step 8 blocker cleared (device-less O/U/C), dual-engine re-time done, EVAL_STORE fusion in PR #52; Dafny-proof gates added to steps 4, 8, 11, 14, 17 · **Home:** `m-semantics/docs/MASTER_CRITICAL_PATH.md` · **≡** `~/CRITICAL_PATH.md`
 
 
-## ★ THE PLAN — single merged critical path (rebuilt 2026-11-04; suggestions applied + renumbered 2026-11-05) ← HERE ★
+## ★ THE PLAN — single merged critical path (rebuilt 2026-11-04; reordered + renumbered 2026-11-05 rev2) ← HERE ★
 
 One list, in execution order. **End state = every step DONE.** Owner: **M** = mark (user), **A** = agent (Vibe).
-**Numbering renumbered 2026-11-05** (phases 1–6, steps numbered within each phase); GitHub issues reference the 2026-11-04 numbering (old steps 1–17) — mapping noted per phase below.
-Tracked on GitHub: mjvm#46 (Phases 1–3) · ydb-mesh#58 (Phase 4) · m-ils#1 (step 3.2) · m-semantics#72 (Phase 6).
+**Numbering rev2 (2026-11-05):** m-ils MVP promoted to Phase 2 (it is the active product milestone; mjvm perf exists to unblock it); the long-running conformance campaign moved to Phase 3. Phases 1–6, steps numbered within each phase. Older numberings for issue-tracker references: 2026-11-04 steps 1–17 mapped per phase below; 2026-11-05 rev1 phases 1–6.
+Tracked on GitHub: mjvm#46 (Phases 1, 3) · m-ils#1 (Phase 2) · ydb-mesh#58 (Phase 4) · m-semantics#72 (Phase 6).
 Gates referenced: corpus 139 (`J0Smoke`), ORACLE (`tools/oracle/run.sh`, red only on diverge/err), GAUNTLET CI on u04,
 JMH bench, smoke suite. Dafny corpus (m-semantics, 11 .dfy modules: MSemantics 73, MControl 84, MRelOps 24, MPattern 25, PEMDAS 5, TieredStore 28, GraphStore 20, BM25 21, Scan 8, BST 14, Bank 48 lemmas; 547 verified) — every semantic change lands with lemma verification (`dafny verify`). Current state noted per step.
 
-(Recently DONE, for the record: #40 collation 5135b54 · #33 store consolidation a93e081 · Comdb2 3-node COHERENT · jobs audit PR #100 · dashboard PR #101 · edge restored ydb-mesh#53 · logrotate ydb-mesh#54 · portal rotation 2026-11-03 · U01 YDB DB scratched 2026-11-02 (corrupt; timers disabled) · perf tranche 2026-11-03/04 (-50% hot loop; PR #45 merged 4e79149 — old step 1) · 1M-PMID export→reload verified on U04 · parser family DONE 2026-11-04 eve (PR #47 merged 2220408, ORACLE known-bugs=0; Dafny: operator fixes pinned in MRelOps.dfy, 24 lemmas, C24/C16 classes — old step 4) · engine-gap micro-benchmarks recorded 2026-11-04 (INTLOOP 5.6x GT.M — old step 5) · YDBTest cross-engine scoped run DONE 2026-11-04 (`m-ecosystem/YDBTEST-CROSSENGINE-2026-11-04.md` — old step 6) · fuzz-triage loop live on U03 since 2026-11-03, 0 NEW 10-29→11-04 (old step 3) · **2026-11-05:** step-8 device-loop blocker cleared (device-less `O fn`/`U fn`/`C fn` from PR #50; `ils-fixture/mjvm_full.m` ported), dual-engine re-time done (mjvm ~0.91 s vs GT.M ~0.34 s ingest-only on the 15 MB CAT fixture, dumps byte-identical, 20,723 lines), EVAL_STORE fusion in PR #52 (-6.0% on the 20M SET loop) · SwiftM (P7) added as Phase 6.)
+(Recently DONE, for the record: #40 collation 5135b54 · #33 store consolidation a93e081 · Comdb2 3-node COHERENT · jobs audit PR #100 · dashboard PR #101 · edge restored ydb-mesh#53 · logrotate ydb-mesh#54 · portal rotation 2026-11-03 · U01 YDB DB scratched 2026-11-02 (corrupt; timers disabled) · perf tranche 2026-11-03/04 (-50% hot loop; PR #45 merged 4e79149 — 11-04 step 1) · 1M-PMID export→reload verified on U04 · parser family DONE 2026-11-04 eve (PR #47 merged 2220408, ORACLE known-bugs=0; Dafny: operator fixes pinned in MRelOps.dfy, 24 lemmas, C24/C16 classes — 11-04 step 4) · engine-gap micro-benchmarks recorded 2026-11-04 (INTLOOP 5.6x GT.M — 11-04 step 5) · YDBTest cross-engine scoped run DONE 2026-11-04 (`m-ecosystem/YDBTEST-CROSSENGINE-2026-11-04.md` — 11-04 step 6) · fuzz-triage loop live on U03 since 2026-11-03, 0 NEW 10-29→11-04 (11-04 step 3) · **2026-11-05:** ingest device-loop blocker cleared (device-less `O fn`/`U fn`/`C fn` from PR #50; `ils-fixture/mjvm_full.m` ported), dual-engine re-time done (mjvm ~0.91 s vs GT.M ~0.34 s ingest-only on the 15 MB CAT fixture, dumps byte-identical, 20,723 lines), EVAL_STORE fusion in PR #52 (-6.0% on the 20M SET loop), fixture runner added (mjvm PR #53, `tools/build-fixture-run.sh`) · SwiftM (P7) on the path as Phase 6.)
 
-### Phase 1 — Housekeeping & CI health
+### Phase 1 — CI & fleet health
 - [ ] 1.1 **Fix the u04 GAUNTLET runner** — the self-hosted workspace holds a stale gitignored generated `GAUNTLET.m`, so GAUNTLET CI fails at 119/120 on every PR, including unmodified main (runs 41952654497, 41953433859, 42064651880 all show the same single `compile error at null` failure). Remove/regenerate the stale file and make the harness regenerate reproducibly in CI. Gate: GAUNTLET green on main's next push. Owner M (runner access). *Blocks the CI signal for all PRs — do first.*
-- [x] 1.2 **Fuzz-triage loop on U03** (old step 3) — live, 0 NEW.
-- [ ] 1.3 **U02 coldstore ← U04 `/backup` refresh** (old step 2, collapsed to a one-shot): at the next weekly refresh, re-sync and verify md5 (U02 `~/coldstore/meshgraph-backup/yottadb.dat` vs U04 `/backup/meshgraph-backup/`; not verifiable from the Mac 2026-11-05 — fleet hosts slow).
+- [x] 1.2 **Fuzz-triage loop on U03** (11-04 step 3) — live, 0 NEW.
+- [ ] 1.3 **U02 coldstore ← U04 `/backup` refresh** (11-04 step 2, collapsed to a one-shot): at the next weekly refresh, re-sync and verify md5 (U02 `~/coldstore/meshgraph-backup/yottadb.dat` vs U04 `/backup/meshgraph-backup/`; not verifiable from the Mac 2026-11-05 — fleet hosts slow).
 
-### Phase 2 — mjvm conformance
-- [ ] 2.1 **Campaign exit** (old step 7): fuzz NEW=0 sustained; ORACLE known-bugs=0 (emptied 2026-11-04 by PR #47); sprint ends **2026-11-30**. Sub-gate: confirm the 2026-11-05 07:30Z U03 fuzz run flipped the parser-family KNOWNs to PASS after adopting 2220408. Owners M+A. *On track: fuzz NEW=0 every run 10-29→11-04; non-PASS fuzz rate 78%→62.5% and falling.*
-- (old steps 4–6 — parser family, micro-benchmarks, YDBTest cross-engine — DONE, in the record above)
+### Phase 2 — m-ils MVP (m-ils#1; was rev1 Phase 3 "perf to unblock m-ils")
+- [ ] 2.1 **Ingest gap (mjvm#43)** (rev1 3.1) — gate now numeric: **≤2x GT.M ingest-only on the 15 MB / 2,663-rec CAT fixture with byte-identical dump** (2026-11-05 on PR #52 branch: mjvm ~0.91 s vs GT.M ~0.34 s = **2.7x — not yet met**; if PR #52 + one more lever doesn't reach ≤2x, owner M may declare done at ~2.7x with rationale). Run via `tools/build-fixture-run.sh` (PR #53). Dafny: the store write-through design, if pursued, is specified in `TieredStore.dfy` (28 lemmas) — spec before code; pure dispatch/fusion perf changes need no proofs. *State: re-time done 2026-11-05 with the ported device-less shell; EVAL_STORE fusion in PR #52.*
+- [ ] 2.2 **m-ils data-model + API design doc** (m-ils#1: deliverable first, in `m-ils/docs/`, then implementation). Owner A+M.
+- [ ] 2.3 **Minimum viable authorization/accounts** (m-ils#1 item d): patron accounts, hashed credential check, patron vs librarian/staff roles, web session/token + TUI login, all mutating endpoints auth-required. Out of scope: SSO/LDAP/OAuth, password-reset beyond staff-side. Owner A+M.
+- [ ] 2.4 **Minimum viable circulation** (m-ils#1 item e): copy-level checkout/checkin, due dates + overdue flag, single renew, holds/request queue, item status (available/on-loan/in-transit/missing). Out: fines, SIP2/NCIP, complex loan rules. Owner A+M.
+- [ ] 2.5 **Minimum viable ILL** (m-ils#1 item f): outgoing requests with status tracking linked to patron + bib; incoming fulfill-from-holdings; email or ISO 18876 "minimum" transport. Out: Z39.50, billing. Owner A+M.
+- [ ] 2.6 **m-ils MVP close-out** (rev1 3.2 / 11-04 step 9): dual-engine — every change ILSTEST all-OK on GT.M (U01:8282) AND mjvm (Mac:8282); store = tieredstore default + comdb2 `ilsdb` 3-node cluster (no sqlite/h2/mapdb); perf gate via 2.1; ops rows current (dashboard on U03). Owner M. Gate: m-ils#1 MVP definition met ("minimally feature complete to run a biomedical research library in North America today").
 
-### Phase 3 — perf to unblock m-ils (old #5 residual, #10)
-- [ ] 3.1 **Ingest gap (mjvm#43)** — gate now numeric: **≤2x GT.M ingest-only on the 15 MB / 2,663-rec CAT fixture with byte-identical dump** (2026-11-05 on PR #52 branch: mjvm ~0.91 s vs GT.M ~0.34 s = **2.7x — not yet met**; if PR #52 + one more lever doesn't reach ≤2x, owner M may declare done at ~2.7x with rationale). Run via `tools/build-fixture-run.sh` (added 2026-11-05). Dafny: the store write-through design, if pursued, is specified in `TieredStore.dfy` (28 lemmas) — spec before code; pure dispatch/fusion perf changes need no proofs. *State: re-time done 2026-11-05 with the ported device-less shell; EVAL_STORE fusion in PR #52.*
-- [ ] 3.2 **m-ils MVP close-out (m-ils#1)** (old step 9): (a) perf gap closed via 3.1; (b) ILSTEST all-OK on both engines for every change; (c) ops rows current (dashboard on U03). Owner M. Gate: MVP definition met.
+### Phase 3 — mjvm conformance campaign (rev1 Phase 2; 11-04 steps 4–7)
+- [ ] 3.1 **Campaign exit** (11-04 step 7): fuzz NEW=0 sustained; ORACLE known-bugs=0 (emptied 2026-11-04 by PR #47); sprint ends **2026-11-30**. Sub-gate: confirm the 2026-11-05 07:30Z U03 fuzz run flipped the parser-family KNOWNs to PASS after adopting 2220408. Owners M+A. *On track: fuzz NEW=0 every run 10-29→11-04; non-PASS fuzz rate 78%→62.5% and falling.* (11-04 steps 4–6 DONE — record above.)
 
-### Phase 4 — MeshGraph YottaDB→GT.M migration (ydb-mesh#58; old steps 10–13)
-- [ ] 4.1 **Full-corpus load** (old 10): length-prefixed binary-safe export of the Oct-28 backup (pristine = U04 `/backup`) → scratch GT.M on U04 (`/home/mark/gtm-mesh-scratch`). Gate: node counts + sample checksums match. *1M-PMID fixture verified 2026-11-04 (998,609/1M, sample 999/1000 byte-identical).*
-- [ ] 4.2 **Port services to M** (old 11): BM25 `term_index`+search, MCP, web portal, dashboard (GTMHTTP v4 socket pattern). Gate: parity harness vs YDB read side — top-k identical on :8081. Dafny gate: re-verify `GraphStore.dfy` (20) + `BM25.dfy` (21) + `Scan.dfy` (8) lemmas against the M port. Owner A+M.
-- [ ] 4.3 **Pipeline dual-load** (old 12): updatefiles → both DBs; counters + query parity for 2 weekly cycles. Gate: zero parity diffs.
-- [ ] 4.4 **Cutover** (old 13): U03 edge Caddyfile repoint to U04 (one line per route, instant rollback); soak; U01 YDB → read-only archive (keep yottadb.dat until validated); backups + timers (update 03:00 / author Sun 04:30 / catplus / backup Sat 02:00) ported U04→U02. Gate: edge health green from outside (401/200/308). Owner M.
+### Phase 4 — MeshGraph YottaDB→GT.M migration (ydb-mesh#58; 11-04 steps 10–13)
+- [ ] 4.1 **Full-corpus load** (11-04 step 10): length-prefixed binary-safe export of the Oct-28 backup (pristine = U04 `/backup`) → scratch GT.M on U04 (`/home/mark/gtm-mesh-scratch`). Gate: node counts + sample checksums match. *1M-PMID fixture verified 2026-11-04 (998,609/1M, sample 999/1000 byte-identical).*
+- [ ] 4.2 **Port services to M** (11-04 step 11): BM25 `term_index`+search, MCP, web portal, dashboard (GTMHTTP v4 socket pattern). Gate: parity harness vs YDB read side — top-k identical on :8081. Dafny gate: re-verify `GraphStore.dfy` (20) + `BM25.dfy` (21) + `Scan.dfy` (8) lemmas against the M port. Owner A+M.
+- [ ] 4.3 **Pipeline dual-load** (11-04 step 12): updatefiles → both DBs; counters + query parity for 2 weekly cycles. Gate: zero parity diffs.
+- [ ] 4.4 **Cutover** (11-04 step 13): U03 edge Caddyfile repoint to U04 (one line per route, instant rollback); soak; U01 YDB → read-only archive (keep yottadb.dat until validated); backups + timers (update 03:00 / author Sun 04:30 / catplus / backup Sat 02:00) ported U04→U02. Gate: edge health green from outside (401/200/308). Owner M.
 
-### Phase 5 — VistA swallowed-syntax (old #8 / step 14)
+### Phase 5 — VistA swallowed-syntax (11-04 step 14, old #8)
 - [ ] 5.1 **Class reduction** (13.7% failing → target): each class lands with a regression test in `mjvm/docs/VISTA-SYNTAX-BACKLOG.md` **plus a .dfy lemma where the semantics are formalizable** (MSemantics/MControl/MRelOps pattern). Owner M. Gate: failing-routine % at target.
 
-### Phase 6 — SwiftM: spec-first M in Swift for macOS (P7 · m-semantics#72; old step 17)
+### Phase 6 — SwiftM: spec-first M in Swift for macOS (P7 · m-semantics#72; 11-04 step 17)
 - [ ] 6.1 **Dafny prerequisites**: (a) comma/SET-list semantics in Dafny — new module (MSemantics.dfy excludes the intrinsic zoo; follow the MRelOps.dfy pattern; parser side already DONE via PR #47); (b) extend `MControl.dfy` (84 lemmas: DO/GOTO/QUIT/$ETRAP/WRITE already formalized) with a new `MCommand.dfy` for SET/IF/FOR/NEW/KILL multi-arg loops + postconditional universality; (c) minimal-conforming-M definition (which of the 139 corpus tests are ISO-required vs vendor-specific). Owner A.
 - [ ] 6.2 **Scaffold the `swiftm` repo docs-only** (SPM package layout: parser/IR/runtime/storage + README pointing at m-semantics#72), landed via PR before any Swift code — same pattern as PR #72. Owner A.
 - [ ] 6.3 **Implement to the gate**: minimal-conforming-M subset of the 139-corpus passes on **swiftm AND mjvm AND GT.M**, with the Dafny corpus green (`dafny verify`, 547+ lemmas). Written against ISO 11756 first, Dafny as cross-check; actor-based JOB/LOCK; `enum MValue`; macOS-only (fleet is Linux); **NOT** a replacement for mjvm/JavaM; no full VistA surface (21k swallowed-line cases are mjvm's job). First real workload: a portable concurrency app (JOB/LOCK/$TEST/TSTART). Owner A.
 
 ### Parked / decisions (not blocking the phases)
-- P-1. **#12 Java→Kotlin conversion** (old 15): trigger changed 2026-11-05 from "after step 4" (now DONE) to **after Phase 3 (step 3.2, m-ils MVP close-out)**; follow `mjvm/docs/KOTLIN-MIGRATION-DESIGN.md` (order ir→AST→emitter→store→runtime→core→MFrontend-last; per-step gates corpus+ORACLE+GAUNTLET+JMH). Design-only, green-lit 2026-11-04. Owner M decides.
-- P-2. **ORACLE upstream parity decision** (old 16; WRITE line-break class — RSM appends END_WRITE, GT.M doesn't): owner review, parked by design (flipping it changes the corpus peer target).
+- P-1. **#12 Java→Kotlin conversion** (11-04 step 15): trigger changed 2026-11-05 to **after Phase 2 (step 2.6, m-ils MVP close-out)** — the 11-04 "after step 4" condition was already met; follow `mjvm/docs/KOTLIN-MIGRATION-DESIGN.md` (order ir→AST→emitter→store→runtime→core→MFrontend-last; per-step gates corpus+ORACLE+GAUNTLET+JMH). Design-only, green-lit 2026-11-04. Owner M decides.
+- P-2. **ORACLE upstream parity decision** (11-04 step 16; WRITE line-break class — RSM appends END_WRITE, GT.M doesn't): owner review, parked by design (flipping it changes the corpus peer target).
 
 **Detail docs:** JavaM `jvmumps/CRITICAL_PATH.md` · `jvmumps/docs/ROADMAP-0.5.0.md` · mjvm `mjvm/docs/` · inventory `m-semantics/docs/MASTER-INVENTORY.md`
 
@@ -56,7 +59,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 
 ---
 
-## Project map (end of 2026-10-28)
+## Project map (2026-11-05)
 
 | Project | Role | State | Stream |
 |---------|------|-------|--------|
@@ -66,6 +69,7 @@ Priority-ordered path. Status: **OPEN** · **IN FLIGHT** · **DONE** · **FROZEN
 | **MeshGraph / ydb-mesh** | YottaDB citation index (44.4M corpus, 42.5M indexed docs, 7.0B postings; repo **ACTIVE — unarchived + upstreamed 2026-10-28**, PR #49) | **ACTIVE — resumed 2026-10-27, post-resume heal 2026-10-28** | **P5** |
 | **m-lsp** | language server | active, clean | P3 |
 | **mformatter** | M formatter | idle | P3 |
+| **m-ils** | demo Integrated Library System in M — CATLINE/SERLINE records, MeSH authority control, TUI + web UI from one codebase; MVP = auth + circulation + ILL (m-ils#1) | active, design-first (2.2); perf-blocked on Phase 2.1 | Phase 2 |
 | **swiftm** (proposed) | spec-first M in Swift — validates Dafny proofs against an independent implementation; native Apple Silicon; actor-based JOB/LOCK | **PROPOSED** — after P1/P2 stabilize | **P7** |
 | **tieredstore-rs** | Rust TieredStore prototype (published, CI green on u04) | active | P4 |
 | **pymumps** | peer corpus host (restored on Mac) | active | P5 |
