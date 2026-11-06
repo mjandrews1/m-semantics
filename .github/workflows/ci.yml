@@ -42,5 +42,11 @@ jobs:
       - name: Verify MRelOps
         run: dafny verify MRelOps.dfy
 
+      - name: Verify MSetList
+        run: dafny verify --verification-time-limit 600 MSetList.dfy
+
+      - name: Verify MCommand
+        run: dafny verify --verification-time-limit 600 MCommand.dfy
+
       - name: Verify BST
         run: dafny verify BST.dfy
